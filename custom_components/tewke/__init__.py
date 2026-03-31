@@ -10,7 +10,7 @@ from pytewke.error import TewkeError
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .const import DOMAIN, LOGGER, SCAN_INTERVAL
+from .const import DOMAIN, LOGGER
 from .coordinator import TewkeCoordinator
 from .data import TewkeConfigEntry, TewkeData
 
@@ -39,7 +39,6 @@ async def async_setup_entry(
         hass=hass,
         logger=LOGGER,
         name=DOMAIN,
-        update_interval=SCAN_INTERVAL,
     )
 
     entry.runtime_data = TewkeData(

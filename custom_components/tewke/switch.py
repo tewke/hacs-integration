@@ -59,20 +59,42 @@ class TewkeSceneSwitch(TewkeEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene."""
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+            await tap.set_scene(
                 scene_id=self._scene_id, state=True, brightness=None
             )
         except TewkeError:
             LOGGER.error("Error activating Tewke scene %s", self._scene_id)
-        await self.coordinator.async_request_refresh()
+            return
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Deactivate the scene."""
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+            await tap.set_scene(
                 scene_id=self._scene_id, state=False, brightness=None
             )
         except TewkeError:
             LOGGER.error("Error deactivating Tewke scene %s", self._scene_id)
-        await self.coordinator.async_request_refresh()
+            return
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )

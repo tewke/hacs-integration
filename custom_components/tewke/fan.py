@@ -77,8 +77,9 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
         if percentage == 0:
             await self.async_turn_off()
             return
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+            await tap.set_scene(
                 scene_id=self._scene_id, state=True, brightness=percentage
             )
         except TewkeError:
@@ -87,7 +88,16 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
             )
             return
         self._percentage = percentage
-        await self.coordinator.async_request_refresh()
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )
 
     async def async_turn_on(
         self,
@@ -102,11 +112,21 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+            await tap.set_scene(
                 scene_id=self._scene_id, state=False, brightness=None
             )
         except TewkeError:
             LOGGER.error("Error turning off Tewke fan scene %s", self._scene_id)
             return
-        await self.coordinator.async_request_refresh()
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )

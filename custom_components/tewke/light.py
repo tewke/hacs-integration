@@ -7,7 +7,7 @@ Two kinds of light entity are registered here:
   the last commanded brightness is tracked locally using optimistic state.
 
 * ``TewkeTargetLight`` — one entity per physical output (target). Target state
-  and brightness are reported by the Tap and updated on every coordinator poll.
+  and brightness are reported by the Tap and updated on every push notification.
   Dimmable targets expose ``ColorMode.BRIGHTNESS``; non-dimmable ones expose
   ``ColorMode.ONOFF``.
 """
@@ -97,26 +97,46 @@ class TewkeSceneLight(TewkeEntity, LightEntity):
         """Activate the scene, optionally at a specific brightness."""
         ha_brightness = kwargs.get(ATTR_BRIGHTNESS, self._brightness)
         tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+            await tap.set_scene(
                 scene_id=self._scene_id, state=True, brightness=tewke_brightness
             )
         except TewkeError:
             LOGGER.error("Error activating Tewke scene %s", self._scene_id)
             return
         self._brightness = ha_brightness
-        await self.coordinator.async_request_refresh()
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Deactivate the scene."""
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+            await tap.set_scene(
                 scene_id=self._scene_id, state=False, brightness=None
             )
         except TewkeError:
             LOGGER.error("Error deactivating Tewke scene %s", self._scene_id)
             return
-        await self.coordinator.async_request_refresh()
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )
 
 
 class TewkeTargetLight(TewkeEntity, LightEntity):
@@ -167,22 +187,42 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
             tewke_brightness = target.brightness if target.brightness > 0 else 100
         else:
             tewke_brightness = 100
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_target(
+            await tap.set_target(
                 target=self._target_index, brightness=tewke_brightness
             )
         except TewkeError:
             LOGGER.error("Error turning on Tewke target %s", self._target_index)
             return
-        await self.coordinator.async_request_refresh()
+        if tap.wall_dock and self._target_index in tap.wall_dock.targets:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "targets": {
+                        **self.coordinator.data["targets"],
+                        self._target_index: tap.wall_dock.targets[self._target_index],
+                    },
+                }
+            )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the output."""
+        tap = self.coordinator.config_entry.runtime_data.tap
         try:
-            await self.coordinator.config_entry.runtime_data.tap.set_target(
+            await tap.set_target(
                 target=self._target_index, brightness=0
             )
         except TewkeError:
             LOGGER.error("Error turning off Tewke target %s", self._target_index)
             return
-        await self.coordinator.async_request_refresh()
+        if tap.wall_dock and self._target_index in tap.wall_dock.targets:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "targets": {
+                        **self.coordinator.data["targets"],
+                        self._target_index: tap.wall_dock.targets[self._target_index],
+                    },
+                }
+            )
