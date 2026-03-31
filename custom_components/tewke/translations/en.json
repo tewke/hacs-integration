@@ -6,9 +6,6 @@
       "no_devices_found": "No devices found on the network.",
       "single_instance_allowed": "Already configured. Only a single configuration possible."
     },
-    "error": {
-      "coap_still_failed": "CoAP communication still failed. Please verify that the CoAP server is properly enabled on your device and that there are no network connectivity issues."
-    },
     "step": {
       "zeroconf_confirm": {
         "description": "You are setting up the Tewke device **{name}**{room_suffix}. Click Submit to continue.",
@@ -21,18 +18,6 @@
       "placeholder": {
         "description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
         "title": "Final setup"
-      },
-      "coap_enable": {
-        "description": "Unable to communicate with the Tewke device **{name}** at {host} via CoAP. Please ensure the CoAP server is enabled on your device and try again.\n\nTo enable CoAP, open the Tewke app on your device and enable the Local API setting.",
-        "title": "Enable CoAP server"
-      },
-      "user": {
-        "data": {
-          "host": "Host",
-          "name": "Name"
-        },
-        "description": "Enter the connection details for your Tewke device.",
-        "title": "Set up Tewke device"
       }
     }
   }

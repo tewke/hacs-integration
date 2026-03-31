@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from pytewke.data import Scene
 from pytewke.error import TewkeError
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -13,19 +12,25 @@ if TYPE_CHECKING:
     from .data import TewkeConfigEntry
 
 
-class TewkeCoordinator(DataUpdateCoordinator[dict[str, Scene]]):
-    """Coordinator to manage fetching scene state from a Tewke Tap.
+class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Coordinator to manage fetching scene and target state from a Tewke Tap.
 
-    A single coordinator instance is created per config entry. All switch
-    entities share it so the Tap is polled exactly once per interval.
+    Returns:
+        {
+            "scenes": dict[str, Scene],
+            "targets": dict[int, Target],
+        }
     """
 
     config_entry: TewkeConfigEntry
 
-    async def _async_update_data(self) -> dict[str, Scene]:
-        """Fetch the latest scene states from the Tap."""
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch the latest scene and target states from the Tap."""
+        tap = self.config_entry.runtime_data.tap
         try:
-            return await self.config_entry.runtime_data.tap.get_scenes()
+            scenes = await tap.get_scenes()
+            targets = await tap.get_targets()
+            return {"scenes": scenes, "targets": targets}
         except TewkeError as err:
             raise UpdateFailed(f"Error communicating with Tewke Tap: {err}") from err
 

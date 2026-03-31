@@ -1,9 +1,7 @@
 """Switch platform for the Tewke integration.
 
-Exposes each Tewke scene as a Home Assistant ``SwitchEntity``. The
-control type stored in the config entry (``switch``, ``light``, or ``fan``)
-determines which scenes are registered here — only scenes whose type is
-``"switch"`` (or unspecified) are created by this platform.
+Exposes each Tewke scene as a Home Assistant ``SwitchEntity``. Only scenes
+whose control type is ``"switch"`` are created by this platform.
 """
 
 from __future__ import annotations
@@ -25,8 +23,6 @@ if TYPE_CHECKING:
     from .coordinator import TewkeCoordinator
     from .data import TewkeConfigEntry
 
-_SWITCH_TYPES = {"switch", ""}
-
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
@@ -39,8 +35,8 @@ async def async_setup_entry(
 
     async_add_entities(
         TewkeSceneSwitch(coordinator=coordinator, scene=scene)
-        for scene in coordinator.data.values()
-        if scene_control_types.get(scene.id, "switch") in _SWITCH_TYPES
+        for scene in coordinator.data["scenes"].values()
+        if scene_control_types.get(scene.id, "light") == "switch"
     )
 
 
@@ -49,7 +45,8 @@ class TewkeSceneSwitch(TewkeEntity, SwitchEntity):
 
     def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
         """Initialise the switch."""
-        super().__init__(coordinator, scene)
+        super().__init__(coordinator)
+        self._scene_id = scene.id
         self._attr_name = scene.name
         entry = coordinator.config_entry
         self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{scene.id}"
@@ -57,7 +54,7 @@ class TewkeSceneSwitch(TewkeEntity, SwitchEntity):
     @property
     def is_on(self) -> bool | None:
         """Return True when the scene is active."""
-        scene = self.coordinator.data.get(self._scene_id)
+        scene = self.coordinator.data["scenes"].get(self._scene_id)
         return scene.is_active if scene is not None else None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
