@@ -95,8 +95,11 @@ class TewkeSceneLight(TewkeEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene, optionally at a specific brightness."""
-        ha_brightness = kwargs.get(ATTR_BRIGHTNESS, self._brightness)
-        tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
+        tewke_brightness = (
+            _ha_to_tewke_brightness(kwargs[ATTR_BRIGHTNESS])
+            if ATTR_BRIGHTNESS in kwargs
+            else None
+        )
         tap = self.coordinator.config_entry.runtime_data.tap
         try:
             await tap.set_scene(
@@ -105,7 +108,8 @@ class TewkeSceneLight(TewkeEntity, LightEntity):
         except TewkeError:
             LOGGER.error("Error activating Tewke scene %s", self._scene_id)
             return
-        self._brightness = ha_brightness
+        if ATTR_BRIGHTNESS in kwargs:
+            self._brightness = kwargs[ATTR_BRIGHTNESS]
         if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
             self.coordinator.async_set_updated_data(
                 {
@@ -181,12 +185,11 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
         target = self._target
         if target is None:
             return
-        if ATTR_BRIGHTNESS in kwargs:
-            tewke_brightness = _ha_to_tewke_brightness(kwargs[ATTR_BRIGHTNESS])
-        elif target.is_dimmable:
-            tewke_brightness = target.brightness if target.brightness > 0 else 100
-        else:
-            tewke_brightness = 100
+        tewke_brightness = (
+            _ha_to_tewke_brightness(kwargs[ATTR_BRIGHTNESS])
+            if ATTR_BRIGHTNESS in kwargs
+            else 100
+        )
         tap = self.coordinator.config_entry.runtime_data.tap
         try:
             await tap.set_target(

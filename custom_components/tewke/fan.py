@@ -106,9 +106,27 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
         **kwargs: Any,
     ) -> None:
         """Turn on the fan, optionally at a specific speed."""
-        await self.async_set_percentage(
-            percentage if percentage is not None else self._percentage
-        )
+        if percentage is not None:
+            await self.async_set_percentage(percentage)
+            return
+        tap = self.coordinator.config_entry.runtime_data.tap
+        try:
+            await tap.set_scene(
+                scene_id=self._scene_id, state=True, brightness=None
+            )
+        except TewkeError:
+            LOGGER.error("Error turning on Tewke fan scene %s", self._scene_id)
+            return
+        if tap.wall_dock and self._scene_id in tap.wall_dock.scenes:
+            self.coordinator.async_set_updated_data(
+                {
+                    **self.coordinator.data,
+                    "scenes": {
+                        **self.coordinator.data["scenes"],
+                        self._scene_id: tap.wall_dock.scenes[self._scene_id],
+                    },
+                }
+            )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
