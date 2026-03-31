@@ -1,0 +1,36 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "cannot_identify": "Unable to determine a unique ID for this device. Please check your device and network configuration.",
+      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
+    },
+    "error": {
+      "coap_still_failed": "CoAP communication still failed. Please verify that the CoAP server is properly enabled on your device and that there are no network connectivity issues."
+    },
+    "step": {
+      "coap_enable": {
+        "description": "Unable to communicate with the Tewke device **{name}** at {host} via CoAP. Please ensure the CoAP server is enabled on your device and try again.\n\nTo enable CoAP, open the Tewke app on your device and enable the Local API setting.",
+        "title": "Enable CoAP server"
+      },
+      "confirm_control_types": {
+        "description": "Setting up Tewke device **{name}** at {host}. Choose the Home Assistant platform type for each scene: {scenes}.",
+        "title": "Configure scene control types"
+      },
+      "placeholder": {
+        "description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
+        "title": "Final setup"
+      },
+      "user": {
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "name": "[%key:common::config_flow::data::name%]"
+        },
+        "description": "Enter the connection details for your Tewke device.",
+        "title": "Set up Tewke device"
+      }
+    }
+  }
+}
+
