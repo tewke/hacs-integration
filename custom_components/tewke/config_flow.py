@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 from typing import Any
 
-import aiocoap
-import cbor2
 import pytewke
 import voluptuous as vol
 
@@ -37,37 +33,24 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         LOGGER.debug("Zeroconf discovery: %s", discovery_info)
 
         self._discovered_host = discovery_info.host
-        fetched_config_data = await self._get_device_config_details()
 
         unique_id = discovery_info.properties.get("hardwareId")
-        if not unique_id:
+        if not unique_id or unique_id is None:
             LOGGER.info(
-                "Failed to get Unique ID from mDNS TXT records. Trying from device configuration (CoAP)"
+                "Failed to get Unique ID from mDNS TXT records."
             )
-            unique_id = fetched_config_data.get("hardwareId") if fetched_config_data else None
-        if unique_id is None:
-            LOGGER.error("Failed to get Unique ID from mDNS or CoAP")
             return self.async_abort(reason="cannot_identify")
         await self.async_set_unique_id(unique_id)
         self._abort_if_unique_id_configured(updates={CONF_HOST: self._discovered_host})
 
-        device_name = discovery_info.properties.get("name")
+        device_name: str | None = discovery_info.properties.get("name")
         if not device_name:
             LOGGER.info(
-                "Failed to get device name from mDNS TXT records. Trying from device configuration (CoAP)"
+                "Failed to get device name from mDNS TXT records, using Serial Number instead"
             )
-            device_name = fetched_config_data.get("deviceName") if fetched_config_data else None
-        if not device_name:
-            LOGGER.warning("Failed to get device name, using Serial Number instead")
-            device_name = discovery_info.name.replace("._tewke._tcp.local.", "")
-        room_name = discovery_info.properties.get("room")
-        if not room_name:
-            room_name = (
-                (fetched_config_data.get("roomName") + ": ")
-                if fetched_config_data and fetched_config_data.get("roomName")
-                else ""
-            )
-        self._discovered_name = room_name + device_name
+            device_name = discovery_info.name.replace("._tewke-coap._udp.local.", "")
+        room_name: str | None = discovery_info.properties.get("room")
+        self._discovered_name = room_name + ": " + device_name if room_name else device_name
 
         self.context["title_placeholders"] = {"name": self._discovered_name}
 
@@ -153,8 +136,6 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
             self._discovered_host = user_input[CONF_HOST]
             self._discovered_name = user_input.get(CONF_NAME, "Tewke Device")
 
-            if await self._get_device_config_details():
-                return await self.async_step_confirm_control_types()
             return await self.async_step_coap_enable()
 
         return self.async_show_form(
@@ -173,8 +154,6 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Shown when CoAP is not reachable; lets the user retry or continue."""
         if user_input is not None:
-            if await self._get_device_config_details():
-                return await self.async_step_confirm_control_types()
             return self.async_show_form(
                 step_id="coap_enable",
                 description_placeholders={
@@ -191,51 +170,3 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                 "host": self._discovered_host,
             },
         )
-
-    async def _get_device_config_details(self) -> dict[str, Any] | None:
-        """Fetch device info from the CoAP ``/config`` endpoint.
-
-        Returns the decoded payload dict, or ``None`` on any failure.
-        Failures are non-fatal — the caller decides whether to abort.
-        """
-        if not self._discovered_host:
-            return None
-
-        context = None
-        try:
-            context = await aiocoap.Context.create_client_context()
-
-            host = self._discovered_host
-            if ":" in host and not host.startswith("["):
-                host = f"[{host}]"
-
-            request = aiocoap.Message(code=aiocoap.GET, uri=f"coap://{host}/config")
-            response = await asyncio.wait_for(
-                context.request(request).response, timeout=5.0
-            )
-        except TimeoutError:
-            LOGGER.debug("CoAP communication timeout with %s", self._discovered_host)
-            return None
-        except Exception:  # noqa: BLE001
-            LOGGER.debug("CoAP communication error with %s", self._discovered_host, exc_info=True)
-            return None
-        finally:
-            if context is not None:
-                with contextlib.suppress(Exception):
-                    await context.shutdown()
-
-        if not response.code.is_successful():
-            LOGGER.error(
-                "Could not get device configuration from %s: %s",
-                self._discovered_name,
-                response.code,
-            )
-            return None
-
-        if response.payload:
-            resp = cbor2.loads(response.payload)
-            LOGGER.debug("Received config payload: %s", resp)
-            return resp
-        return None
-
-

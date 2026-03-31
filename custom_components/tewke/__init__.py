@@ -17,7 +17,7 @@ from .data import TewkeConfigEntry, TewkeData
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
-PLATFORMS: list[Platform] = [Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.LIGHT, Platform.FAN]
 
 
 async def async_setup_entry(
