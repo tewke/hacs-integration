@@ -16,6 +16,7 @@ from .data import TewkeConfigEntry, TewkeData
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from pytewke.data import Scene, Target
 
 PLATFORMS: list[Platform] = [Platform.FAN, Platform.LIGHT, Platform.SWITCH]
 
@@ -49,6 +50,33 @@ async def async_setup_entry(
 
     await coordinator.async_config_entry_first_refresh()
 
+    def _on_scene_update(scene: Scene) -> None:
+        """Push a live scene state update into the coordinator."""
+        if coordinator.data is None:
+            return
+        coordinator.async_set_updated_data(
+            {
+                **coordinator.data,
+                "scenes": {**coordinator.data["scenes"], scene.id: scene},
+            }
+        )
+
+    def _on_target_update(target: Target) -> None:
+        """Push a live target state update into the coordinator."""
+        if coordinator.data is None:
+            return
+        coordinator.async_set_updated_data(
+            {
+                **coordinator.data,
+                "targets": {**coordinator.data["targets"], target.index: target},
+            }
+        )
+
+    await tap.observe(
+        scene_callback=_on_scene_update,
+        target_callback=_on_target_update,
+    )
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     entry.async_on_unload(tap.close)
@@ -70,5 +98,4 @@ async def async_reload_entry(
 ) -> None:
     """Reload config entry."""
     await hass.config_entries.async_reload(entry.entry_id)
-
 

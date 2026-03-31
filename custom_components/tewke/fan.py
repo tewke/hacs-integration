@@ -89,9 +89,16 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
         self._percentage = percentage
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_on(self, percentage: int | None = None, **kwargs: Any) -> None:
+    async def async_turn_on(
+        self,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Turn on the fan, optionally at a specific speed."""
-        await self.async_set_percentage(percentage if percentage is not None else self._percentage)
+        await self.async_set_percentage(
+            percentage if percentage is not None else self._percentage
+        )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
