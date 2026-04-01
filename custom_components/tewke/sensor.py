@@ -22,6 +22,7 @@ from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     LIGHT_LUX,
     PERCENTAGE,
+    UnitOfPower,
     UnitOfPressure,
     UnitOfTemperature,
 )
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
-    from pytewke.data import RadarData, SensorData
+    from pytewke.data import EnergyData, RadarData, SensorData
 
     from .coordinator import TewkeCoordinator
     from .data import TewkeConfigEntry
@@ -161,7 +162,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Tewke sensor entities from a config entry."""
     coordinator = entry.runtime_data.coordinator
-    entities: list[TewkeSensor | TewkeRadarSensor] = []
+    entities: list[TewkeSensor | TewkeRadarSensor | TewkeEnergySensor] = []
 
     if coordinator.data.get("sensors") is not None:
         entities.extend(
@@ -173,6 +174,12 @@ async def async_setup_entry(
         entities.extend(
             TewkeRadarSensor(coordinator=coordinator, description=description)
             for description in RADAR_SENSOR_DESCRIPTIONS
+        )
+
+    if coordinator.data.get("energy") is not None:
+        entities.extend(
+            TewkeEnergySensor(coordinator=coordinator, description=description)
+            for description in ENERGY_SENSOR_DESCRIPTIONS
         )
 
     async_add_entities(entities)
@@ -218,7 +225,7 @@ RADAR_SENSOR_DESCRIPTIONS: tuple[TewkeRadarSensorEntityDescription, ...] = (
         name="Radar Proximity",
         device_class=SensorDeviceClass.ENUM,
         options=["none", "near", "far"],
-        value_fn=lambda r: r.proximity,
+        value_fn=lambda r: r.proximity.value,
     ),
     TewkeRadarSensorEntityDescription(
         key="radar_near_threshold",
@@ -274,3 +281,58 @@ class TewkeRadarSensor(TewkeEntity, SensorEntity):
         if radar is None:
             return None
         return self.entity_description.value_fn(radar)
+
+
+@dataclass(frozen=True, kw_only=True)
+class TewkeEnergySensorEntityDescription(SensorEntityDescription):
+    """Describes a Tewke energy sensor entity."""
+
+    value_fn: Callable[[EnergyData], float | None]
+
+
+ENERGY_SENSOR_DESCRIPTIONS: tuple[TewkeEnergySensorEntityDescription, ...] = (
+    TewkeEnergySensorEntityDescription(
+        key="power",
+        name="Power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda e: e.power,
+    ),
+    TewkeEnergySensorEntityDescription(
+        key="actual_power",
+        name="Actual Power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        entity_registry_enabled_default=False,
+        value_fn=lambda e: e.actual_power,
+    ),
+)
+
+
+class TewkeEnergySensor(TewkeEntity, SensorEntity):
+    """A Tewke power consumption sensor entity."""
+
+    entity_description: TewkeEnergySensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: TewkeCoordinator,
+        description: TewkeEnergySensorEntityDescription,
+    ) -> None:
+        """Initialise the energy sensor."""
+        super().__init__(coordinator)
+        self.entity_description = description
+        entry = coordinator.config_entry
+        self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{description.key}"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the power reading in watts."""
+        energy: EnergyData | None = self.coordinator.data.get("energy")
+        if energy is None:
+            return None
+        return self.entity_description.value_fn(energy)
