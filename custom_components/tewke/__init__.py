@@ -10,15 +10,21 @@ from pytewke.error import TewkeError
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .const import DOMAIN, LOGGER
-from .coordinator import TewkeCoordinator
+from .const import DOMAIN, LOGGER, SENSOR_SCAN_INTERVAL
+from .coordinator import TewkeCoordinator, TewkeSensorCoordinator
 from .data import TewkeConfigEntry, TewkeData
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from pytewke.data import Scene, Target
 
-PLATFORMS: list[Platform] = [Platform.FAN, Platform.LIGHT, Platform.SWITCH]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.FAN,
+    Platform.LIGHT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 
 
 async def async_setup_entry(
@@ -40,14 +46,22 @@ async def async_setup_entry(
         logger=LOGGER,
         name=DOMAIN,
     )
+    sensor_coordinator = TewkeSensorCoordinator(
+        hass=hass,
+        logger=LOGGER,
+        name=f"{DOMAIN}_sensors",
+        update_interval=SENSOR_SCAN_INTERVAL,
+    )
 
     entry.runtime_data = TewkeData(
         tap=tap,
         coordinator=coordinator,
+        sensor_coordinator=sensor_coordinator,
         scene_control_types=entry.data.get("scene_control_types", {}),
     )
 
     await coordinator.async_config_entry_first_refresh()
+    await sensor_coordinator.async_config_entry_first_refresh()
 
     def _on_scene_update(scene: Scene) -> None:
         """Push a live scene state update into the coordinator."""
@@ -71,10 +85,17 @@ async def async_setup_entry(
             }
         )
 
-    await tap.observe(
-        scene_callback=_on_scene_update,
-        target_callback=_on_target_update,
-    )
+    try:
+        await tap.observe(
+            scene_callback=_on_scene_update,
+            target_callback=_on_target_update,
+        )
+    except TewkeError:
+        LOGGER.debug(
+            "Tewke device at %s does not support live observation; "
+            "falling back to polling only",
+            entry.data[CONF_HOST],
+        )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
