@@ -1,20 +1,20 @@
 {
-  "domain": "tewke",
-  "name": "Tewke",
-  "codeowners": ["@1NFR4R3D"],
-  "config_flow": true,
-  "documentation": "https://github.com/tewke/hacs-integration",
-  "integration_type": "device",
-  "iot_class": "local_push",
-  "loggers": ["pytewke"],
-  "quality_scale": "bronze",
-  "requirements": [
-    "pytewke@git+https://gitlab.com/tewke/open-source/pytewke.git@20a6f32f60b7c04f28ed0ddd14da9f4fe831f953"
-  ],
-  "zeroconf": [
-    {
-      "type": "_tewke-coap._udp.local."
-    }
-  ],
-  "version": "0.1.0"
+	"domain": "tewke",
+	"name": "Tewke",
+	"codeowners": ["@1NFR4R3D"],
+	"config_flow": true,
+	"documentation": "https://github.com/tewke/hacs-integration",
+	"integration_type": "device",
+	"iot_class": "local_push",
+	"loggers": ["pytewke"],
+	"quality_scale": "bronze",
+	"requirements": [
+		"pytewke@git+https://gitlab.com/tewke/open-source/pytewke.git@0325b159d470bc6559bc2d19a1a1ad1dd240ba77"
+	],
+	"zeroconf": [
+		{
+			"type": "_tewke-coap._udp.local."
+		}
+	],
+	"version": "0.1.0"
 }

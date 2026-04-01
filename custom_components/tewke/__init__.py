@@ -78,9 +78,7 @@ async def async_setup_entry(
     def _on_sensor_update(sensor_data: SensorData) -> None:
         if coordinator.data is None:
             return
-        coordinator.async_set_updated_data(
-            {**coordinator.data, "sensors": sensor_data}
-        )
+        coordinator.async_set_updated_data({**coordinator.data, "sensors": sensor_data})
 
     await tap.observe(
         scene_callback=_on_scene_update,

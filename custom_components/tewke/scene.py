@@ -117,7 +117,9 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene, optionally at a specific brightness."""
-        ha_brightness = kwargs.get(ATTR_BRIGHTNESS, self._brightness if self._brightness is not None else 255)
+        ha_brightness = kwargs.get(
+            ATTR_BRIGHTNESS, self._brightness if self._brightness is not None else 255
+        )
         tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
         try:
             await self.coordinator.config_entry.runtime_data.tap.set_scene(
@@ -154,7 +156,7 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         """Initialise the scene fan."""
         super().__init__(coordinator, scene)
 
-    async def async_set_percentage(self, percentage: int | None) -> None:
+    async def _async_set_percentage(self, percentage: int | None) -> None:
         """Set fan speed. A percentage of 0 turns the fan off."""
         if percentage == 0:
             await self.async_turn_off()
@@ -166,6 +168,10 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         except TewkeError:
             LOGGER.error("Error setting speed for Tewke fan scene %s", self._scene_id)
 
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set fan speed. A percentage of 0 turns the fan off."""
+        return await self._async_set_percentage(percentage)
+
     async def async_turn_on(
         self,
         percentage: int | None = None,
@@ -173,9 +179,7 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         **kwargs: Any,
     ) -> None:
         """Turn on the fan, optionally at a specific speed."""
-        await self.async_set_percentage(
-            percentage if percentage is not None else None
-        )
+        await self._async_set_percentage(percentage)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
