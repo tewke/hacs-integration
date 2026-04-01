@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytewke
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.helpers import selector
-from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import DOMAIN, LOGGER
+
+if TYPE_CHECKING:
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 _CONTROL_TYPE_OPTIONS = [
     selector.SelectOptionDict(value="light", label="Light"),
@@ -80,13 +81,13 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Assign a Home Assistant platform type to each scene."""
-        if self._tap is None:
-            self._tap = pytewke.Tap(self._discovered_host)
+        tap = self._tap if self._tap is not None else pytewke.Tap(self._discovered_host)
+        self._tap = tap
 
-        if not self._tap.resources:
-            await self._tap.discover()
+        if not tap.resources:
+            await tap.discover()
 
-        scenes = await self._tap.get_scenes()
+        scenes = await tap.get_scenes()
         LOGGER.debug("Discovered scenes: %s", scenes)
 
         if user_input is not None:
@@ -119,7 +120,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_placeholder(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Final confirmation before creating the config entry."""
+        """Final confirmation before creating the config entry."""  # noqa: D401
         if user_input is not None:
             return self.async_create_entry(
                 title=self._discovered_name,

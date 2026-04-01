@@ -1,25 +1,25 @@
 {
-  "config": {
-    "abort": {
-      "already_configured": "Device is already configured.",
-      "cannot_identify": "Unable to determine a unique ID for this device. Please check your device and network configuration.",
-      "no_devices_found": "No devices found on the network.",
-      "single_instance_allowed": "Already configured. Only a single configuration possible."
-    },
-    "step": {
-      "zeroconf_confirm": {
-        "description": "You are setting up the Tewke device **{name}**{room_suffix}. Click Submit to continue.",
-        "title": "Tewke device found"
-      },
-      "confirm_control_types": {
-        "description": "Choose the Home Assistant platform type for each scene.\n\n**Light** (default) — the scene appears as a dimmable light entity.\n**Switch** — use this if you want to remove brightness control entirely.\n**Fan** — use this if you want brightness or speed control, but do not want the scene to appear as a light entity.",
-        "title": "Configure scene types"
-      },
-      "placeholder": {
-        "description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
-        "title": "Final setup"
-      }
-    }
-  }
+	"config": {
+		"abort": {
+			"already_configured": "Device is already configured.",
+			"cannot_identify": "Unable to determine a unique ID for this device. Please check your device and network configuration.",
+			"no_devices_found": "No devices found on the network.",
+			"single_instance_allowed": "Already configured. Only a single configuration possible."
+		},
+		"step": {
+			"zeroconf_confirm": {
+				"description": "You are setting up the Tewke device **{name}**{room_suffix}. Click Submit to continue.",
+				"title": "Tewke device found"
+			},
+			"confirm_control_types": {
+				"description": "Choose the Home Assistant platform type for each scene.\n\n**Light** (default) — the scene appears as a dimmable light entity.\n**Switch** — use this if you want to remove brightness control entirely.\n**Fan** — use this if you want brightness or speed control, but do not want the scene to appear as a light entity.",
+				"title": "Configure scene types"
+			},
+			"placeholder": {
+				"description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
+				"title": "Final setup"
+			}
+		}
+	}
 }
 

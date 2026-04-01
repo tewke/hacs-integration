@@ -11,7 +11,8 @@ from .coordinator import TewkeCoordinator
 
 
 class TewkeEntity(CoordinatorEntity[TewkeCoordinator]):
-    """Base class for Tewke entities.
+    """
+    Base class for Tewke entities.
 
     Each subclass represents a single scene or target output exposed as a HA
     platform entity (switch, light, fan). State is fetched via the shared
@@ -21,7 +22,7 @@ class TewkeEntity(CoordinatorEntity[TewkeCoordinator]):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: TewkeCoordinator) -> None:
-        """Initialize the entity."""
+        """Initialise the entity."""
         super().__init__(coordinator)
         entry = coordinator.config_entry
         self._attr_device_info = DeviceInfo(

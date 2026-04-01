@@ -1,4 +1,5 @@
-"""Binary sensor platform for the Tewke integration.
+"""
+Binary sensor platform for the Tewke integration.
 
 Exposes boolean BME680 calibration status fields, delivered via CoAP
 observation (local_push). Both are disabled by default as diagnostic values.
@@ -6,11 +7,8 @@ observation (local_push). Both are disabled by default as diagnostic values.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-from pytewke.data import SensorData
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
@@ -20,8 +18,11 @@ from homeassistant.components.binary_sensor import (
 from .entity import TewkeEntity
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from pytewke.data import SensorData
 
     from .coordinator import TewkeCoordinator
     from .data import TewkeConfigEntry

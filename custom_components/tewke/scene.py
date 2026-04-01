@@ -1,11 +1,12 @@
-"""Scene-based entity classes for the Tewke integration.
+"""
+Scene-based entity classes for the Tewke integration.
 
 Each Tewke scene can be exposed as one of three HA platform types depending on
 the control type chosen during config flow:
 
-* ``TewkeSceneSwitch`` — ``SwitchEntity``, no brightness
-* ``TewkeSceneLight`` — ``LightEntity``, brightness 0-255 (optimistic)
-* ``TewkeSceneFan`` — ``FanEntity``, percentage 0-100 (optimistic)
+* "TewkeSceneSwitch" — "SwitchEntity", no brightness
+* "TewkeSceneLight" — "LightEntity", brightness 0-255 (optimistic)
+* "TewkeSceneFan" — "FanEntity", percentage 0-100 (optimistic)
 
 Scene brightness is write-only on the Tewke API; the last commanded value is
 held locally for optimistic rendering.
@@ -15,11 +16,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pytewke.error import TewkeError
-
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
 from homeassistant.components.switch import SwitchEntity
+from pytewke.error import TewkeError
 
 from .const import LOGGER
 from .entity import TewkeEntity
@@ -102,10 +102,11 @@ class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
 
 
 class TewkeSceneLight(TewkeSceneEntity, LightEntity):
-    """A Tewke scene exposed as a dimmable light.
+    """
+    A Tewke scene exposed as a dimmable light.
 
     The Tewke API does not return scene brightness, so the last commanded
-    brightness is held in ``_brightness`` for optimistic rendering.
+    brightness is held in "_brightness" for optimistic rendering.
     """
 
     _attr_color_mode = ColorMode.BRIGHTNESS
@@ -139,7 +140,8 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
 
 
 class TewkeSceneFan(TewkeSceneEntity, FanEntity):
-    """A Tewke scene exposed as a fan.
+    """
+    A Tewke scene exposed as a fan.
 
     Fan speed percentage (0-100) maps directly to Tewke brightness (0-100).
     The last commanded percentage is stored locally because the Tewke API does

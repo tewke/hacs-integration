@@ -1,11 +1,12 @@
-"""Target-based entity classes for the Tewke integration.
+"""
+Target-based entity classes for the Tewke integration.
 
-Each Tewke physical output (target) is exposed as a ``LightEntity``. Targets
+Each Tewke physical output (target) is exposed as a "LightEntity". Targets
 are disabled by default because most users will prefer to control their device
 via scenes; targets are an advanced option for direct output control.
 
-Dimmable targets expose ``ColorMode.BRIGHTNESS``; non-dimmable ones expose
-``ColorMode.ONOFF``. Brightness values are converted between the Tewke scale
+Dimmable targets expose "ColorMode.BRIGHTNESS"; non-dimmable ones expose
+"ColorMode.ONOFF". Brightness values are converted between the Tewke scale
 (0-100) and the HA scale (0-255).
 """
 
@@ -13,9 +14,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pytewke.error import TewkeError
-
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
+from pytewke.error import TewkeError
 
 from .const import LOGGER
 from .entity import TewkeEntity
@@ -37,7 +37,8 @@ def _ha_to_tewke_brightness(value: int) -> int:
 
 
 class TewkeTargetLight(TewkeEntity, LightEntity):
-    """A Tewke physical output (target) exposed as a light.
+    """
+    A Tewke physical output (target) exposed as a light.
 
     Disabled by default — targets are an advanced interface for direct output
     control. Most users should use scenes instead.

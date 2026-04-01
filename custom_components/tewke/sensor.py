@@ -1,4 +1,5 @@
-"""Sensor platform for the Tewke integration.
+"""
+Sensor platform for the Tewke integration.
 
 Exposes all numeric fields from the BME680 and ambient light readings,
 delivered via CoAP observation (local_push). No polling occurs.
@@ -8,11 +9,8 @@ Disabled-by-default sensors are raw/diagnostic values.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-from pytewke.data import SensorData
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -31,8 +29,11 @@ from homeassistant.const import (
 from .entity import TewkeEntity
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from pytewke.data import SensorData
 
     from .coordinator import TewkeCoordinator
     from .data import TewkeConfigEntry
