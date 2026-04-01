@@ -10,7 +10,7 @@ from pytewke.error import TewkeError
 from .const import LOGGER
 
 if TYPE_CHECKING:
-    from pytewke.data import SensorData
+    from pytewke.data import RadarData, SensorData
 
     from .data import TewkeConfigEntry
 
@@ -51,4 +51,10 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             LOGGER.debug("Sensor data not available from Tewke Tap")
             sensors = None
 
-        return {"scenes": scenes, "targets": targets, "sensors": sensors}
+        try:
+            radar: RadarData | None = await tap.get_radar()
+        except TewkeError:
+            LOGGER.debug("Radar data not available from Tewke Tap")
+            radar = None
+
+        return {"scenes": scenes, "targets": targets, "sensors": sensors, "radar": radar}

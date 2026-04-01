@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
-    from pytewke.data import SensorData
+    from pytewke.data import RadarData, SensorData
 
     from .coordinator import TewkeCoordinator
     from .data import TewkeConfigEntry
@@ -161,13 +161,21 @@ async def async_setup_entry(
 ) -> None:
     """Set up Tewke sensor entities from a config entry."""
     coordinator = entry.runtime_data.coordinator
-    if coordinator.data.get("sensors") is None:
-        return
+    entities: list[TewkeSensor | TewkeRadarSensor] = []
 
-    async_add_entities(
-        TewkeSensor(coordinator=coordinator, description=description)
-        for description in SENSOR_DESCRIPTIONS
-    )
+    if coordinator.data.get("sensors") is not None:
+        entities.extend(
+            TewkeSensor(coordinator=coordinator, description=description)
+            for description in SENSOR_DESCRIPTIONS
+        )
+
+    if coordinator.data.get("radar") is not None:
+        entities.extend(
+            TewkeRadarSensor(coordinator=coordinator, description=description)
+            for description in RADAR_SENSOR_DESCRIPTIONS
+        )
+
+    async_add_entities(entities)
 
 
 class TewkeSensor(TewkeEntity, SensorEntity):
@@ -195,3 +203,76 @@ class TewkeSensor(TewkeEntity, SensorEntity):
         if sensors is None:
             return None
         return self.entity_description.value_fn(sensors)
+
+
+@dataclass(frozen=True, kw_only=True)
+class TewkeRadarSensorEntityDescription(SensorEntityDescription):
+    """Describes a Tewke radar sensor entity."""
+
+    value_fn: Callable[[RadarData], str | int | None]
+
+
+RADAR_SENSOR_DESCRIPTIONS: tuple[TewkeRadarSensorEntityDescription, ...] = (
+    TewkeRadarSensorEntityDescription(
+        key="radar_proximity",
+        name="Radar Proximity",
+        device_class=SensorDeviceClass.ENUM,
+        options=["none", "near", "far"],
+        value_fn=lambda r: r.proximity,
+    ),
+    TewkeRadarSensorEntityDescription(
+        key="radar_near_threshold",
+        name="Radar Near Threshold",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        value_fn=lambda r: r.thresholds.near.value if r.thresholds else None,
+    ),
+    TewkeRadarSensorEntityDescription(
+        key="radar_near_hysteresis",
+        name="Radar Near Hysteresis",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        value_fn=lambda r: r.thresholds.near.hysteresis if r.thresholds else None,
+    ),
+    TewkeRadarSensorEntityDescription(
+        key="radar_far_threshold",
+        name="Radar Far Threshold",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        value_fn=lambda r: r.thresholds.far.value if r.thresholds else None,
+    ),
+    TewkeRadarSensorEntityDescription(
+        key="radar_far_hysteresis",
+        name="Radar Far Hysteresis",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        value_fn=lambda r: r.thresholds.far.hysteresis if r.thresholds else None,
+    ),
+)
+
+
+class TewkeRadarSensor(TewkeEntity, SensorEntity):
+    """A Tewke radar proximity sensor entity."""
+
+    entity_description: TewkeRadarSensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: TewkeCoordinator,
+        description: TewkeRadarSensorEntityDescription,
+    ) -> None:
+        """Initialise the radar sensor."""
+        super().__init__(coordinator)
+        self.entity_description = description
+        entry = coordinator.config_entry
+        self._attr_unique_id = (
+            f"{entry.unique_id or entry.entry_id}_{description.key}"
+        )
+
+    @property
+    def native_value(self) -> str | int | None:
+        """Return the sensor reading."""
+        radar: RadarData | None = self.coordinator.data.get("radar")
+        if radar is None:
+            return None
+        return self.entity_description.value_fn(radar)
