@@ -127,6 +127,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_HOST: self._discovered_host,
                     CONF_NAME: self._discovered_name,
+                    "room_name": self._room_name,
                     "scene_control_types": self._scene_control_types or {},
                 },
             )

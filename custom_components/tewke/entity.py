@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -25,7 +25,12 @@ class TewkeEntity(CoordinatorEntity[TewkeCoordinator]):
         """Initialise the entity."""
         super().__init__(coordinator)
         entry = coordinator.config_entry
+        tap = entry.runtime_data.tap
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.unique_id or entry.entry_id)},
             name=entry.data.get(CONF_NAME, "Tewke"),
+            manufacturer="Tewke",
+            model="Tap",
+            sw_version=tap.tewke_os_version,
+            suggested_area=entry.data.get("room_name"),
         )
