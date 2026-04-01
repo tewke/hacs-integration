@@ -57,4 +57,9 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             LOGGER.debug("Radar data not available from Tewke Tap")
             radar = None
 
-        return {"scenes": scenes, "targets": targets, "sensors": sensors, "radar": radar}
+        return {
+            "scenes": scenes,
+            "targets": targets,
+            "sensors": sensors,
+            "radar": radar,
+        }
