@@ -9,7 +9,7 @@
 	"loggers": ["pytewke"],
 	"quality_scale": "bronze",
 	"requirements": [
-		"pytewke@git+https://gitlab.com/tewke/open-source/pytewke.git@ff125b3b16aeddb052fc29da7aaefe9889c200aa"
+		"pytewke@git+https://gitlab.com/tewke/open-source/pytewke.git@add18c3776a1db0d64bd7f17cfaed7f9b65b1fca"
 	],
 	"zeroconf": [
 		{
