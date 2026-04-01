@@ -40,22 +40,47 @@ def _ha_to_tewke_brightness(value: int) -> int:
     return round(value / 255 * 100)
 
 
-class TewkeSceneSwitch(TewkeEntity, SwitchEntity):
-    """A Tewke scene exposed as a switch."""
+class TewkeSceneEntity(TewkeEntity):
+    """A Tewke scene base entity."""
 
     def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
-        """Initialise the switch."""
+        """Initialise the scene light."""
         super().__init__(coordinator)
         self._scene_id = scene.id
         self._attr_name = scene.name
         entry = coordinator.config_entry
         self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{scene.id}"
+        self._brightness: int | None = None
+
+    @property
+    def _scene(self) -> Scene | None:
+        return self.coordinator.data["scene"].get(self._scene_id)
 
     @property
     def is_on(self) -> bool | None:
         """Return True when the scene is active."""
-        scene = self.coordinator.data["scenes"].get(self._scene_id)
+        scene = self._scene
         return scene.is_active if scene is not None else None
+
+    @property
+    def brightness(self) -> int | None:
+        """Return the last commanded brightness (0-255), or None if unknown."""
+        scene = self._scene
+        return _tewke_to_ha_brightness(scene.brightness) if scene is not None else None
+
+    @property
+    def percentage(self) -> int | None:
+        """Return the last commanded fan speed (0-100), or None if unknown."""
+        scene = self._scene
+        return scene.brightness if scene is not None else None
+
+
+class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
+    """A Tewke scene exposed as a switch."""
+
+    def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
+        """Initialise the switch."""
+        super().__init__(coordinator, scene)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene."""
@@ -76,7 +101,7 @@ class TewkeSceneSwitch(TewkeEntity, SwitchEntity):
             LOGGER.error("Error deactivating Tewke scene %s", self._scene_id)
 
 
-class TewkeSceneLight(TewkeEntity, LightEntity):
+class TewkeSceneLight(TewkeSceneEntity, LightEntity):
     """A Tewke scene exposed as a dimmable light.
 
     The Tewke API does not return scene brightness, so the last commanded
@@ -88,36 +113,17 @@ class TewkeSceneLight(TewkeEntity, LightEntity):
 
     def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
         """Initialise the scene light."""
-        super().__init__(coordinator)
-        self._scene_id = scene.id
-        self._attr_name = scene.name
-        entry = coordinator.config_entry
-        self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{scene.id}"
-        self._brightness: int | None = None
-
-    @property
-    def is_on(self) -> bool | None:
-        """Return True when the scene is active."""
-        scene = self.coordinator.data["scenes"].get(self._scene_id)
-        return scene.is_active if scene is not None else None
-
-    @property
-    def brightness(self) -> int | None:
-        """Return the last commanded brightness (0-255), or None if unknown."""
-        return self._brightness
+        super().__init__(coordinator, scene)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene, optionally at a specific brightness."""
         ha_brightness = kwargs.get(ATTR_BRIGHTNESS, self._brightness if self._brightness is not None else 255)
         tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
-        previous_brightness = self._brightness
-        self._brightness = ha_brightness
         try:
             await self.coordinator.config_entry.runtime_data.tap.set_scene(
                 scene_id=self._scene_id, state=True, brightness=tewke_brightness
             )
         except TewkeError:
-            self._brightness = previous_brightness
             LOGGER.error("Error activating Tewke scene %s", self._scene_id)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -130,7 +136,7 @@ class TewkeSceneLight(TewkeEntity, LightEntity):
             LOGGER.error("Error deactivating Tewke scene %s", self._scene_id)
 
 
-class TewkeSceneFan(TewkeEntity, FanEntity):
+class TewkeSceneFan(TewkeSceneEntity, FanEntity):
     """A Tewke scene exposed as a fan.
 
     Fan speed percentage (0-100) maps directly to Tewke brightness (0-100).
@@ -146,37 +152,18 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
 
     def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
         """Initialise the scene fan."""
-        super().__init__(coordinator)
-        self._scene_id = scene.id
-        self._attr_name = scene.name
-        entry = coordinator.config_entry
-        self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{scene.id}"
-        self._percentage: int | None = None
+        super().__init__(coordinator, scene)
 
-    @property
-    def is_on(self) -> bool | None:
-        """Return True when the scene is active."""
-        scene = self.coordinator.data["scenes"].get(self._scene_id)
-        return scene.is_active if scene is not None else None
-
-    @property
-    def percentage(self) -> int | None:
-        """Return the last commanded fan speed (0-100), or None if unknown."""
-        return self._percentage
-
-    async def async_set_percentage(self, percentage: int) -> None:
+    async def async_set_percentage(self, percentage: int | None) -> None:
         """Set fan speed. A percentage of 0 turns the fan off."""
         if percentage == 0:
             await self.async_turn_off()
             return
-        previous_percentage = self._percentage
-        self._percentage = percentage
         try:
             await self.coordinator.config_entry.runtime_data.tap.set_scene(
                 scene_id=self._scene_id, state=True, brightness=percentage
             )
         except TewkeError:
-            self._percentage = previous_percentage
             LOGGER.error("Error setting speed for Tewke fan scene %s", self._scene_id)
 
     async def async_turn_on(
@@ -187,7 +174,7 @@ class TewkeSceneFan(TewkeEntity, FanEntity):
     ) -> None:
         """Turn on the fan, optionally at a specific speed."""
         await self.async_set_percentage(
-            percentage if percentage is not None else (self._percentage if self._percentage is not None else 100)
+            percentage if percentage is not None else None
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
