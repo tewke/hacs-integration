@@ -54,7 +54,7 @@ class TewkeSceneEntity(TewkeEntity):
 
     @property
     def _scene(self) -> Scene | None:
-        return self.coordinator.data["scene"].get(self._scene_id)
+        return self.coordinator.data["scenes"].get(self._scene_id)
 
     @property
     def is_on(self) -> bool | None:
