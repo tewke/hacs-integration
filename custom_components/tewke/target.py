@@ -15,7 +15,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
-from pytewke.error import TewkeError
+from pytewke.error import (
+    PyTewkeCoapError,
+    PyTewkeInvalidRequestError,
+    PyTewkeInvalidResponseError,
+    PyTewkeInvalidWallDockError,
+    PyTewkeUnknownError,
+)
 
 from .const import LOGGER
 from .entity import TewkeEntity
@@ -95,8 +101,19 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
             await self.coordinator.config_entry.runtime_data.tap.set_target(
                 target=self._target_index, brightness=tewke_brightness
             )
-        except TewkeError:
-            LOGGER.error("Error turning on Tewke target %s", self._target_index)
+        except PyTewkeInvalidWallDockError:
+            LOGGER.error("Attempted to set Target while not connected to Wall Dock")
+        except (PyTewkeInvalidRequestError, RuntimeError) as e:
+            LOGGER.error(
+                "Internal activating Tewke target %s: %s", self._target_index, e
+            )
+        except (
+            PyTewkeCoapError,
+            PyTewkeInvalidResponseError,
+            PyTewkeUnknownError,
+            TimeoutError,
+        ) as e:
+            LOGGER.error("Error activating Tewke target %s: %s", self._target_index, e)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the output."""
@@ -104,5 +121,16 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
             await self.coordinator.config_entry.runtime_data.tap.set_target(
                 target=self._target_index, brightness=0
             )
-        except TewkeError:
-            LOGGER.error("Error turning off Tewke target %s", self._target_index)
+        except PyTewkeInvalidWallDockError:
+            LOGGER.error("Attempted to set Target while not connected to Wall Dock")
+        except (PyTewkeInvalidRequestError, RuntimeError) as e:
+            LOGGER.error(
+                "Internal turning off Tewke target %s: %s", self._target_index, e
+            )
+        except (
+            PyTewkeCoapError,
+            PyTewkeInvalidResponseError,
+            PyTewkeUnknownError,
+            TimeoutError,
+        ) as e:
+            LOGGER.error("Error turning off Tewke target %s: %s", self._target_index, e)
