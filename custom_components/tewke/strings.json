@@ -20,6 +20,22 @@
 				"title": "Final setup"
 			}
 		}
+	},
+	"issues": {
+		"new_scenes_found": {
+			"title": "New scenes discovered",
+			"description": "New scenes have been discovered on your Tewke device '{name}'.\n\nPlease configure them to make them available in Home Assistant.",
+			"fix_flow": {
+				"step": {
+					"init": {
+						"title": "Configure new Tewke scenes",
+						"description": "New scenes were found on your Tewke device '{name}'. Please assign a Home Assistant platform type for each new scene."
+					}
+				},
+				"abort": {
+					"no_new_scenes": "There are no new scenes pending configuration for your Tewke device '{name}'."
+				}
+			}
+		}
 	}
 }
-
