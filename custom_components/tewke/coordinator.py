@@ -43,7 +43,7 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch initial state for all resources."""
         tap = self.config_entry.runtime_data.tap
         try:
-            scenes = await tap.get_scenes()
+            scenes_all = await tap.get_scenes()
             targets = await tap.get_targets()
         except (
             PyTewkeCoapError,
@@ -53,6 +53,13 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         ) as err:
             msg = f"Error communicating with Tewke Tap: {err}"
             raise UpdateFailed(msg) from err
+
+        scene_control_types = self.config_entry.runtime_data.scene_control_types
+        configured_scenes = {
+            scene_id: scene
+            for scene_id, scene in scenes_all.items()
+            if scene_id in scene_control_types
+        }
 
         try:
             sensors: SensorData | None = await tap.get_sensors()
@@ -99,7 +106,8 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config = None
 
         return {
-            "scenes": scenes,
+            "scenes": configured_scenes,
+            "scenes_all": scenes_all,
             "targets": targets,
             "sensors": sensors,
             "radar": radar,

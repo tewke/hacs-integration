@@ -24,7 +24,7 @@ target-version = ["py312"]
 select = [
     "A", # detect shadowed builtins
     "BLE", # disallow catch-all exceptions
-    "C4", # Catch incorrect use of comprehensions, dict, list, etc
+    "C4", # Catch incorrect use of comprehensions, dict, list, etc.
     "COM", # enforce trailing comma rules
     "DTZ", # require strict timezone manipulation with datetime
     "E", # PyCodeStyle errors
@@ -43,7 +43,7 @@ select = [
     "TC", # Enforce importing certain types in a TYPE_CHECKING block
     #    "TD",       # Be diligent with TODO comments
     "TID", # Some good import practices
-    "UP", # Warn if certain things can changed due to newer Python versions
+    "UP", # Warn if certain things can change due to newer Python versions
     "W", # PyCodeStyle warnings
 ]
 ignore = [

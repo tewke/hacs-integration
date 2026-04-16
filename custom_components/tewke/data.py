@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pytewke
     from homeassistant.config_entries import ConfigEntry
+    from pytewke.data import Scene
 
     from .coordinator import TewkeCoordinator
 
@@ -21,3 +22,4 @@ class TewkeData:
     tap: pytewke.Tap
     coordinator: TewkeCoordinator
     scene_control_types: dict[str, str]
+    pending_scenes: dict[str, Scene] = field(default_factory=dict)

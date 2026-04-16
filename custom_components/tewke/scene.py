@@ -56,7 +56,8 @@ class TewkeSceneEntity(TewkeEntity):
         self._attr_name = scene.name
         entry = coordinator.config_entry
         self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{scene.id}"
-        self._brightness: int | None = None
+        self._is_on = scene.is_active
+        self._brightness: int | None = scene.brightness
 
     @property
     def _scene(self) -> Scene | None:
@@ -68,25 +69,57 @@ class TewkeSceneEntity(TewkeEntity):
         if not super().available:
             return False
 
-        return self._scene_id in self.coordinator.data.get("scenes")
+        return self._scene_id in self.coordinator.data.get("scenes", {})
 
     @property
     def is_on(self) -> bool | None:
         """Return True when the scene is active."""
         scene = self._scene
-        return scene.is_active if scene is not None else None
+        if scene is not None:
+            self._is_on = scene.is_active
+            self._brightness = scene.brightness
+        return self._is_on
 
     @property
     def brightness(self) -> int | None:
         """Return the last commanded brightness (0-255), or None if unknown."""
-        scene = self._scene
-        return _tewke_to_ha_brightness(scene.brightness) if scene is not None else None
+        return (
+            _tewke_to_ha_brightness(self._brightness)
+            if self._brightness is not None
+            else None
+        )
 
     @property
     def percentage(self) -> int | None:
         """Return the last commanded fan speed (0-100), or None if unknown."""
-        scene = self._scene
-        return scene.brightness if scene is not None else None
+        return self._brightness
+
+    async def _async_set_scene(
+        self, *, state: bool, brightness: int | None = None
+    ) -> None:
+        """Set the scene state and brightness."""
+        try:
+            await self.coordinator.config_entry.runtime_data.tap.set_scene(
+                scene_id=self._scene_id, state=state, brightness=brightness
+            )
+            self._is_on = state
+            if state and brightness is not None:
+                self._brightness = brightness
+            self.async_write_ha_state()
+            await self.coordinator.async_request_refresh()
+        except PyTewkeInvalidWallDockError:
+            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
+        except (PyTewkeInvalidRequestError, RuntimeError):
+            action = "activating" if state else "deactivating"
+            LOGGER.exception("Internal error %s Tewke scene %s", action, self._scene_id)
+        except (
+            PyTewkeCoapError,
+            PyTewkeInvalidResponseError,
+            PyTewkeUnknownError,
+            TimeoutError,
+        ):
+            action = "activating" if state else "deactivating"
+            LOGGER.exception("Error %s Tewke scene %s", action, self._scene_id)
 
 
 class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
@@ -96,49 +129,13 @@ class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
         """Initialise the switch."""
         super().__init__(coordinator, scene)
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:  # noqa: ARG002
         """Activate the scene."""
-        try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
-                scene_id=self._scene_id, state=True, brightness=None
-            )
-            self._attr_available = True
-        except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError) as e:
-            LOGGER.exception("Internal error activating Tewke scene %s", self._scene_id)
-        except (
-            PyTewkeCoapError,
-            PyTewkeInvalidResponseError,
-            PyTewkeUnknownError,
-            TimeoutError,
-        ) as e:
-            LOGGER.exception("Error activating Tewke scene %s", self._scene_id)
-        finally:
-            self._attr_available = False
+        await self._async_set_scene(state=True)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
         """Deactivate the scene."""
-        try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
-                scene_id=self._scene_id, state=False, brightness=None
-            )
-            self._attr_available = True
-        except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError) as e:
-            LOGGER.exception(
-                "Internal error deactivating Tewke scene %s: %s", self._scene_id
-            )
-        except (
-            PyTewkeCoapError,
-            PyTewkeInvalidResponseError,
-            PyTewkeUnknownError,
-            TimeoutError,
-        ) as e:
-            LOGGER.exception("Error deactivating Tewke scene %s: %s", self._scene_id)
-        finally:
-            self._attr_available = False
+        await self._async_set_scene(state=False)
 
 
 class TewkeSceneLight(TewkeSceneEntity, LightEntity):
@@ -150,57 +147,21 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
     """
 
     _attr_color_mode = ColorMode.BRIGHTNESS
-    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
     def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
         """Initialise the scene light."""
         super().__init__(coordinator, scene)
+        self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene, optionally at a specific brightness."""
-        ha_brightness = kwargs.get(ATTR_BRIGHTNESS)
+        ha_brightness = kwargs.get(ATTR_BRIGHTNESS, 100)
         tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
-        try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
-                scene_id=self._scene_id, state=True, brightness=tewke_brightness
-            )
-            self._attr_available = True
-        except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError) as e:
-            LOGGER.exception("Internal error activating Tewke scene %s", self._scene_id)
-        except (
-            PyTewkeCoapError,
-            PyTewkeInvalidResponseError,
-            PyTewkeUnknownError,
-            TimeoutError,
-        ) as e:
-            LOGGER.exception("Error activating Tewke scene %s", self._scene_id)
-        finally:
-            self._attr_available = False
+        await self._async_set_scene(state=True, brightness=tewke_brightness)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
         """Deactivate the scene."""
-        try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
-                scene_id=self._scene_id, state=False, brightness=None
-            )
-            self._attr_available = True
-        except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError) as e:
-            LOGGER.exception(
-                "Internal error deactivating Tewke scene %s", self._scene_id
-            )
-        except (
-            PyTewkeCoapError,
-            PyTewkeInvalidResponseError,
-            PyTewkeUnknownError,
-            TimeoutError,
-        ) as e:
-            LOGGER.exception("Error deactivating Tewke scene %s", self._scene_id)
-        finally:
-            self._attr_available = False
+        await self._async_set_scene(state=False)
 
 
 class TewkeSceneFan(TewkeSceneEntity, FanEntity):
@@ -227,24 +188,7 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         if percentage == 0:
             await self.async_turn_off()
             return
-        try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
-                scene_id=self._scene_id, state=True, brightness=percentage
-            )
-            self._attr_available = True
-        except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError) as e:
-            LOGGER.exception("Internal error activating Tewke scene %s", self._scene_id)
-        except (
-            PyTewkeCoapError,
-            PyTewkeInvalidResponseError,
-            PyTewkeUnknownError,
-            TimeoutError,
-        ) as e:
-            LOGGER.exception("Error activating Tewke scene %s", self._scene_id)
-        finally:
-            self._attr_available = False
+        await self._async_set_scene(state=True, brightness=percentage)
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set fan speed. A percentage of 0 turns the fan off."""
@@ -253,31 +197,12 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
     async def async_turn_on(
         self,
         percentage: int | None = None,
-        preset_mode: str | None = None,
-        **kwargs: Any,
+        preset_mode: str | None = None,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
     ) -> None:
         """Turn on the fan, optionally at a specific speed."""
         await self._async_set_percentage(percentage)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
         """Turn off the fan."""
-        try:
-            await self.coordinator.config_entry.runtime_data.tap.set_scene(
-                scene_id=self._scene_id, state=False, brightness=None
-            )
-            self._attr_available = True
-        except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError) as e:
-            LOGGER.exception(
-                "Internal error deactivating Tewke scene %s", self._scene_id
-            )
-        except (
-            PyTewkeCoapError,
-            PyTewkeInvalidResponseError,
-            PyTewkeUnknownError,
-            TimeoutError,
-        ) as e:
-            LOGGER.exception("Error deactivating Tewke scene %s", self._scene_id)
-        finally:
-            self._attr_available = False
+        await self._async_set_scene(state=False)

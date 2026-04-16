@@ -73,6 +73,14 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
         return self.coordinator.data["targets"].get(self._target_index)
 
     @property
+    def available(self) -> bool:
+        """Return True if the target is available, False otherwise."""
+        if not super().available:
+            return False
+
+        return self._target_index in self.coordinator.data.get("targets", {})
+
+    @property
     def is_on(self) -> bool | None:
         """Return True when the output is on."""
         target = self._target
@@ -92,20 +100,25 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
         if target is None:
             return
         if ATTR_BRIGHTNESS in kwargs:
-            tewke_brightness = _ha_to_tewke_brightness(kwargs[ATTR_BRIGHTNESS])
+            tewke_brightness = kwargs.get(ATTR_BRIGHTNESS, 100)
         elif target.is_dimmable:
             tewke_brightness = target.brightness if target.brightness > 0 else 100
         else:
             tewke_brightness = 100
+
         try:
             await self.coordinator.config_entry.runtime_data.tap.set_target(
                 target=self._target_index, brightness=tewke_brightness
             )
+            await self.coordinator.async_request_refresh()
         except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Target while not connected to Wall Dock")
+            LOGGER.error(
+                "Attempted to set Target %s while not connected to Wall Dock",
+                self._target_index,
+            )
         except (PyTewkeInvalidRequestError, RuntimeError) as e:
             LOGGER.error(
-                "Internal activating Tewke target %s: %s", self._target_index, e
+                "Internal error activating Tewke target %s: %s", self._target_index, e
             )
         except (
             PyTewkeCoapError,
@@ -121,11 +134,15 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
             await self.coordinator.config_entry.runtime_data.tap.set_target(
                 target=self._target_index, brightness=0
             )
+            await self.coordinator.async_request_refresh()
         except PyTewkeInvalidWallDockError:
-            LOGGER.error("Attempted to set Target while not connected to Wall Dock")
+            LOGGER.error(
+                "Attempted to set Target %s while not connected to Wall Dock",
+                self._target_index,
+            )
         except (PyTewkeInvalidRequestError, RuntimeError) as e:
             LOGGER.error(
-                "Internal turning off Tewke target %s: %s", self._target_index, e
+                "Internal error turning off Tewke target %s: %s", self._target_index, e
             )
         except (
             PyTewkeCoapError,
