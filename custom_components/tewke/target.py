@@ -25,21 +25,12 @@ from pytewke.error import (
 
 from .const import LOGGER
 from .entity import TewkeEntity
+from .util import _tewke_to_ha_brightness
 
 if TYPE_CHECKING:
     from pytewke.data import Target
 
     from .coordinator import TewkeCoordinator
-
-
-def _tewke_to_ha_brightness(value: int) -> int:
-    """Convert a Tewke brightness (0-100) to HA brightness (0-255)."""
-    return round(value / 100 * 255)
-
-
-def _ha_to_tewke_brightness(value: int) -> int:
-    """Convert a HA brightness (0-255) to a Tewke brightness (0-100)."""
-    return round(value / 255 * 100)
 
 
 class TewkeTargetLight(TewkeEntity, LightEntity):
@@ -128,7 +119,7 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
         ) as e:
             LOGGER.error("Error activating Tewke target %s: %s", self._target_index, e)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
         """Turn off the output."""
         try:
             await self.coordinator.config_entry.runtime_data.tap.set_target(
