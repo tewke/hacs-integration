@@ -104,7 +104,7 @@ async def async_setup_entry(
             ir.async_create_issue(
                 hass,
                 DOMAIN,
-                "new_scenes_found",
+                f"new_scenes_found_{entry.entry_id}",
                 data={"entry_id": entry.entry_id},
                 is_fixable=True,
                 is_persistent=False,

@@ -102,7 +102,7 @@ SENSOR_DESCRIPTIONS: tuple[TewkeSensorEntityDescription, ...] = (
         value_fn=lambda s: s.gas_percentage,
     ),
     TewkeSensorEntityDescription(
-        key="ambient_light_lux",
+        key="ambient_light",
         name="Ambient Light",
         device_class=SensorDeviceClass.ILLUMINANCE,
         native_unit_of_measurement=LIGHT_LUX,

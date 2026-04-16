@@ -68,7 +68,8 @@ class TewkeSceneEntity(TewkeEntity):
         scene = self._scene
         if scene is not None:
             self._is_on = scene.is_active
-            self._brightness = scene.brightness
+            if scene.brightness is not None:
+                self._brightness = scene.brightness
         return self._is_on
 
     @property
@@ -146,7 +147,7 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Activate the scene, optionally at a specific brightness."""
-        ha_brightness = kwargs.get(ATTR_BRIGHTNESS, 100)
+        ha_brightness = kwargs.get(ATTR_BRIGHTNESS, self.brightness or 255)
         tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
         await self._async_set_scene(state=True, brightness=tewke_brightness)
 
