@@ -25,7 +25,7 @@ from pytewke.error import (
 
 from .const import LOGGER
 from .entity import TewkeEntity
-from .util import _tewke_to_ha_brightness
+from .util import _ha_to_tewke_brightness, _tewke_to_ha_brightness
 
 if TYPE_CHECKING:
     from pytewke.data import Target
@@ -91,7 +91,8 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
         if target is None:
             return
         if ATTR_BRIGHTNESS in kwargs:
-            tewke_brightness = kwargs.get(ATTR_BRIGHTNESS, 100)
+            ha_brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
+            tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
         elif target.is_dimmable:
             tewke_brightness = target.brightness if target.brightness > 0 else 100
         else:

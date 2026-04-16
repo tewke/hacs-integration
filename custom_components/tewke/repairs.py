@@ -88,7 +88,7 @@ async def async_create_fix_flow(
     data: dict[str, str | int | float | None] | None,
 ) -> TewkeNewSceneRepairFlow | None:
     """Create a repair flow to add new scenes."""
-    if issue_id == "new_scenes_found":
+    if issue_id.startswith("new_scenes_found"):
         if data is None:
             return None
         entry_id = data.get("entry_id")
