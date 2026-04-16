@@ -30,8 +30,8 @@ async def async_setup_entry(
 
     entities = [
         TewkeSceneLight(coordinator=coordinator, scene=scene)
-        for scene in coordinator.data["scenes"].values()
-        if scene_control_types.get(scene.id, "light") == "light"
+        for scene_id, scene in coordinator.data["scenes"].items()
+        if scene_control_types.get(scene_id) == "light"
     ]
     entities += [
         TewkeTargetLight(coordinator=coordinator, target=target)
@@ -44,7 +44,7 @@ async def async_setup_entry(
         async_add_entities(
             TewkeSceneLight(coordinator=coordinator, scene=scene)
             for scene in scenes
-            if scene_control_types.get(scene.id, "light") == "light"
+            if scene_control_types.get(scene.id) == "light"
         )
 
     entry.async_on_unload(

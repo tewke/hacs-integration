@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant.components.repairs import RepairsFlow
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers import selector
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import LOGGER
+from .const import DISPATCHER_ADD_SCENES, DOMAIN, LOGGER
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -46,10 +48,12 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
             pending = {}
 
         if user_input is not None and any(k in pending for k in user_input):
-            new_control_types = self.entry.runtime_data.scene_control_types.copy()
+            new_control_types = self.entry.runtime_data.scene_control_types
+            added_scenes = []
 
             for scene_id, control_type in user_input.items():
                 if scene_id in pending:
+                    added_scenes.append(pending[scene_id])
                     new_control_types[scene_id] = control_type
                     del pending[scene_id]
 
@@ -57,6 +61,19 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
                 self.entry,
                 data={**self.entry.data, "scene_control_types": new_control_types},
             )
+
+            # Refresh coordinator to update data['scenes'] with new control types
+            await self.entry.runtime_data.coordinator.async_request_refresh()
+
+            if added_scenes:
+                async_dispatcher_send(
+                    self.hass, DISPATCHER_ADD_SCENES, added_scenes
+                )
+
+            if not pending:
+                ir.async_delete_issue(
+                    self.hass, DOMAIN, f"new_scenes_found_{self.entry.entry_id}"
+                )
 
             return self.async_create_entry(data={})
 

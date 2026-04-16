@@ -29,8 +29,8 @@ async def async_setup_entry(
 
     async_add_entities(
         TewkeSceneFan(coordinator=coordinator, scene=scene)
-        for scene in coordinator.data["scenes"].values()
-        if scene_control_types.get(scene.id, "light") == "fan"
+        for scene_id, scene in coordinator.data["scenes"].items()
+        if scene_control_types.get(scene_id) == "fan"
     )
 
     @callback
@@ -38,7 +38,7 @@ async def async_setup_entry(
         async_add_entities(
             TewkeSceneFan(coordinator=coordinator, scene=scene)
             for scene in scenes
-            if scene_control_types.get(scene.id, "light") == "fan"
+            if scene_control_types.get(scene.id) == "fan"
         )
 
     entry.async_on_unload(

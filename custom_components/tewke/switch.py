@@ -29,8 +29,8 @@ async def async_setup_entry(
 
     async_add_entities(
         TewkeSceneSwitch(coordinator=coordinator, scene=scene)
-        for scene in coordinator.data["scenes"].values()
-        if scene_control_types.get(scene.id, "light") == "switch"
+        for scene_id, scene in coordinator.data["scenes"].items()
+        if scene_control_types.get(scene_id) == "switch"
     )
 
     @callback
@@ -38,7 +38,7 @@ async def async_setup_entry(
         async_add_entities(
             TewkeSceneSwitch(coordinator=coordinator, scene=scene)
             for scene in scenes
-            if scene_control_types.get(scene.id, "light") == "switch"
+            if scene_control_types.get(scene.id) == "switch"
         )
 
     entry.async_on_unload(
