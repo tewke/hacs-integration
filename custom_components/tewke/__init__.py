@@ -58,6 +58,7 @@ async def async_setup_entry(
     tewke_coordinator.config_entry = entry
 
     entry.runtime_data = TewkeData(
+        host=entry.data[CONF_HOST],
         tap=tap,
         coordinator=tewke_coordinator,
         scene_control_types=entry.data.get("scene_control_types", {}),

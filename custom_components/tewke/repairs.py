@@ -48,7 +48,7 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
             pending = {}
 
         if user_input is not None and any(k in pending for k in user_input):
-            new_control_types = self.entry.runtime_data.scene_control_types
+            new_control_types = self.entry.runtime_data.scene_control_types.copy()
             added_scenes = []
 
             for scene_id, control_type in user_input.items():
@@ -62,13 +62,25 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
                 data={**self.entry.data, "scene_control_types": new_control_types},
             )
 
-            # Refresh coordinator to update data['scenes'] with new control types
-            await self.entry.runtime_data.coordinator.async_request_refresh()
+            self.entry.runtime_data.scene_control_types = new_control_types
+
+            coordinator = self.entry.runtime_data.coordinator
+            scenes_all = coordinator.data.get("scenes_all", {})
+            configured_scenes = {
+                scene_id: scene
+                for scene_id, scene in scenes_all.items()
+                if scene_id in new_control_types
+            }
+
+            coordinator.async_set_updated_data(
+                {
+                    **coordinator.data,
+                    "scenes": configured_scenes,
+                }
+            )
 
             if added_scenes:
-                async_dispatcher_send(
-                    self.hass, DISPATCHER_ADD_SCENES, added_scenes
-                )
+                async_dispatcher_send(self.hass, DISPATCHER_ADD_SCENES, added_scenes)
 
             if not pending:
                 ir.async_delete_issue(
@@ -84,9 +96,7 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        scene_id, default="light"
-                    ): selector.SelectSelector(
+                    vol.Required(scene_id, default="light"): selector.SelectSelector(
                         selector.SelectSelectorConfig(
                             options=_CONTROL_TYPE_OPTIONS,
                             mode=selector.SelectSelectorMode.DROPDOWN,
