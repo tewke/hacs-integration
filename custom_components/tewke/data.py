@@ -19,6 +19,7 @@ type TewkeConfigEntry = ConfigEntry[TewkeData]
 class TewkeData:
     """Data for the Tewke integration."""
 
+    host: str
     tap: pytewke.Tap
     coordinator: TewkeCoordinator
     scene_control_types: dict[str, str]
