@@ -96,7 +96,7 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(scene_id, default="light"): selector.SelectSelector(
+                    vol.Required(scene_id, default=str(pending[scene_id].name)): selector.SelectSelector(
                         selector.SelectSelectorConfig(
                             options=_CONTROL_TYPE_OPTIONS,
                             mode=selector.SelectSelectorMode.DROPDOWN,
