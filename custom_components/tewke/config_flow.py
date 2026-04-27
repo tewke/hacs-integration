@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
     from .coordinator import TewkeCoordinator
-    from .data import TewkeConfigEntry
 
 _CONTROL_TYPE_OPTIONS = [
     selector.SelectOptionDict(value="light", label="Light"),
@@ -64,7 +63,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         return TewkeOptionsFlow()
 
     async def async_step_zeroconf(
-        self, discovery_info: ZeroconfServiceInfo
+            self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle zeroconf discovery."""
         LOGGER.debug("Zeroconf discovery: %s", discovery_info)
@@ -92,7 +91,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self.async_step_zeroconf_confirm()
 
     async def async_step_zeroconf_confirm(
-        self, user_input: dict[str, str] | None = None
+            self, user_input: dict[str, str] | None = None
     ) -> ConfigFlowResult:
         """Confirm the discovered device and proceed to scene setup."""
         if user_input is not None:
@@ -108,7 +107,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_confirm_control_types(
-        self, user_input: dict[str, str] | None = None
+            self, user_input: dict[str, str] | None = None
     ) -> ConfigFlowResult:
         """Assign a Home Assistant platform type to each scene."""
         tap = self._tap if self._tap is not None else pytewke.Tap(self._discovered_host)
@@ -134,10 +133,10 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
             if fan_scene_ids:
                 return await self.async_step_fan_default_speeds()
             self._default_scene_fan_dimming = {}
-            return await self.async_step_placeholder()
+            return await self.async_step_confirmation()
 
         if not scenes:
-            return await self.async_step_placeholder()
+            return await self.async_step_confirmation()
 
         return self.async_show_form(
             step_id="confirm_control_types",
@@ -155,7 +154,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_fan_default_speeds(
-        self, user_input: dict[str, float] | None = None
+            self, user_input: dict[str, float] | None = None
     ) -> ConfigFlowResult:
         """Set a default scene dimming value for each fan scene."""
         fan_scenes = {
@@ -173,7 +172,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                 for name, value in user_input.items()
                 if name in name_to_id
             }
-            return await self.async_step_placeholder()
+            return await self.async_step_confirmation()
 
         return self.async_show_form(
             step_id="fan_default_speeds",
@@ -187,8 +186,8 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
         )
 
-    async def async_step_placeholder(
-        self, user_input: dict[str, str] | None = None
+    async def async_step_confirmation(
+            self, user_input: dict[str, str] | None = None
     ) -> ConfigFlowResult:
         """Final confirmation before creating the config entry."""  # noqa: D401
         if user_input is not None:
@@ -215,7 +214,7 @@ class TewkeOptionsFlow(OptionsFlow):
     """Handle options for the Tewke integration."""
 
     async def async_step_init(
-        self, user_input: dict[str, float] | None = None
+            self, user_input: dict[str, float] | None = None
     ) -> ConfigFlowResult:
         """Manage fan default speed options."""
         entry = self.config_entry
