@@ -4,6 +4,7 @@
 
 - [Home Assistant Tewke](#home-assistant-tewke)
   - [Features](#features)
+  - [Prerequisites](#prerequisites)
   - [How to install](#how-to-install)
     - [HACS](#hacs)
     - [Manual](#manual)
@@ -51,7 +52,7 @@ You should use the latest commit on [main](https://github.com/tewke/hacs-integra
 
 To install, place the contents of `custom_components` into the 
 `<config directory>/custom_components` folder of your Home Assistant 
-installation. Once installed, remember to restart your home assistant 
+installation. Once installed, remember to restart your Home Assistant 
 instance for the integration to be picked up.
 
 ## Issues
