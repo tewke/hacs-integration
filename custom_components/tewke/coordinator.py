@@ -47,13 +47,7 @@ class TewkeCoordinator(DataUpdateCoordinator[TewkeCoordinatorData]):
     in `_async_update_data` runs once on setup, after which
     "async_set_updated_data" is called by each observation callback.
 
-    Returns:
-        {
-            "scenes": dict[str, Scene],
-            "targets": dict[int, Target],
-            "sensors": SensorData | None,
-        }
-
+    See TewkeCoordinatorData for the full shape of the coordinator data.
     """
 
     config_entry: TewkeConfigEntry
