@@ -40,7 +40,9 @@ if TYPE_CHECKING:
 class TewkeSceneEntity(TewkeEntity):
     """A Tewke scene base entity."""
 
-    def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
+    def __init__(
+        self, coordinator: TewkeCoordinator, scene: Scene, enabled_default: bool = True
+    ) -> None:
         """Initialise the scene light."""
         super().__init__(coordinator)
         self._scene_id = scene.id
@@ -49,6 +51,7 @@ class TewkeSceneEntity(TewkeEntity):
         self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{scene.id}"
         self._is_on = scene.is_active
         self._brightness: int | None = scene.brightness
+        self._attr_entity_registry_enabled_default = enabled_default
 
     @property
     def _scene(self) -> Scene | None:
@@ -117,9 +120,11 @@ class TewkeSceneEntity(TewkeEntity):
 class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
     """A Tewke scene exposed as a switch."""
 
-    def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
+    def __init__(
+        self, coordinator: TewkeCoordinator, scene: Scene, enabled_default: bool = True
+    ) -> None:
         """Initialise the switch."""
-        super().__init__(coordinator, scene)
+        super().__init__(coordinator, scene, enabled_default)
 
     async def async_turn_on(self, **_kwargs: object) -> None:
         """Activate the scene."""
@@ -140,9 +145,11 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
 
     _attr_color_mode = ColorMode.BRIGHTNESS
 
-    def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
+    def __init__(
+        self, coordinator: TewkeCoordinator, scene: Scene, enabled_default: bool = True
+    ) -> None:
         """Initialise the scene light."""
-        super().__init__(coordinator, scene)
+        super().__init__(coordinator, scene, enabled_default)
         self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
     async def async_turn_on(self, **kwargs: object) -> None:
@@ -177,9 +184,10 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         coordinator: TewkeCoordinator,
         scene: Scene,
         default_dimming: int = 50,
+        enabled_default: bool = True,
     ) -> None:
         """Initialise the scene fan."""
-        super().__init__(coordinator, scene)
+        super().__init__(coordinator, scene, enabled_default)
         self._default_dimming = default_dimming
 
     async def _async_set_percentage(self, percentage: int | None) -> None:

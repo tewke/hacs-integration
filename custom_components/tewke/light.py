@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from .const import DISPATCHER_ADD_SCENES
+from .const import CONF_DISABLED_SCENES, DISPATCHER_ADD_SCENES
 from .scene import TewkeSceneLight
 from .target import TewkeTargetLight
 
@@ -27,9 +27,14 @@ async def async_setup_entry(
     """Set up Tewke light entities from a config entry."""
     coordinator = entry.runtime_data.coordinator
     scene_control_types = entry.runtime_data.scene_control_types
+    disabled_scenes: list[str] = entry.data.get(CONF_DISABLED_SCENES, [])
 
     entities = [
-        TewkeSceneLight(coordinator=coordinator, scene=scene)
+        TewkeSceneLight(
+            coordinator=coordinator,
+            scene=scene,
+            enabled_default=scene_id not in disabled_scenes,
+        )
         for scene_id, scene in coordinator.data["scenes"].items()
         if scene_control_types.get(scene_id) == "light"
     ]
@@ -42,7 +47,11 @@ async def async_setup_entry(
     @callback
     def _async_add_new_scenes(scenes: list[Scene]) -> None:
         async_add_entities(
-            TewkeSceneLight(coordinator=coordinator, scene=scene)
+            TewkeSceneLight(
+                coordinator=coordinator,
+                scene=scene,
+                enabled_default=scene.id not in disabled_scenes,
+            )
             for scene in scenes
             if scene_control_types.get(scene.id) == "light"
         )
