@@ -92,12 +92,22 @@ async def async_setup_entry(
             }
         )
 
+        # Remove pending scenes that no longer exist on the device
+        stale_ids = [
+            sid for sid in entry.runtime_data.pending_scenes if sid not in scenes
+        ]
+        for sid in stale_ids:
+            del entry.runtime_data.pending_scenes[sid]
+
         new_scenes = {
             scene_id: scene
             for scene_id, scene in scenes.items()
             if scene_id not in scene_control_types
             and scene_id not in entry.runtime_data.pending_scenes
         }
+
+        if not new_scenes and not entry.runtime_data.pending_scenes:
+            ir.async_delete_issue(hass, DOMAIN, f"new_scenes_found_{entry.entry_id}")
 
         if new_scenes:
             LOGGER.info("Discovered new scenes, pending configuration: %s", new_scenes)
