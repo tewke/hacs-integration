@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, TypedDict
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from pytewke.error import (
@@ -14,12 +14,31 @@ from pytewke.error import (
 from .const import LOGGER
 
 if TYPE_CHECKING:
-    from pytewke.data import ConfigData, EnergyData, RadarData, SensorData
+    from pytewke.data import (
+        ConfigData,
+        EnergyData,
+        RadarData,
+        Scene,
+        SensorData,
+        Target,
+    )
 
     from .data import TewkeConfigEntry
 
 
-class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+class TewkeCoordinatorData(TypedDict):
+    """Typed data held by TewkeCoordinator."""
+
+    scenes: dict[str, Scene]
+    scenes_all: dict[str, Scene]
+    targets: dict[int, Target]
+    sensors: SensorData | None
+    radar: RadarData | None
+    energy: EnergyData | None
+    config: ConfigData | None
+
+
+class TewkeCoordinator(DataUpdateCoordinator[TewkeCoordinatorData]):
     """
     Coordinator for all Tewke state (scenes, targets, sensors).
 
@@ -39,7 +58,7 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     config_entry: TewkeConfigEntry
 
-    async def _async_update_data(self) -> dict[str, Any]:
+    async def _async_update_data(self) -> TewkeCoordinatorData:
         """Fetch initial state for all resources."""
         tap = self.config_entry.runtime_data.tap
         try:
@@ -105,12 +124,12 @@ class TewkeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             LOGGER.debug("Config data not available from Tewke Tap: %s", err)
             config = None
 
-        return {
-            "scenes": configured_scenes,
-            "scenes_all": scenes_all,
-            "targets": targets,
-            "sensors": sensors,
-            "radar": radar,
-            "energy": energy,
-            "config": config,
-        }
+        return TewkeCoordinatorData(
+            scenes=configured_scenes,
+            scenes_all=scenes_all,
+            targets=targets,
+            sensors=sensors,
+            radar=radar,
+            energy=energy,
+            config=config,
+        )

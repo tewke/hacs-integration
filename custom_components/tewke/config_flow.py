@@ -2,17 +2,27 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytewke
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .const import DOMAIN, LOGGER
+from . import TewkeCoordinator
+from .const import (
+    CONF_DEFAULT_SCENE_FAN_DIMMING,
+    DEFAULT_SCENE_FAN_DIMMING,
+    DOMAIN,
+    LOGGER,
+)
 
 if TYPE_CHECKING:
+    from pytewke.data import Scene
+
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 _CONTROL_TYPE_OPTIONS = [
@@ -20,6 +30,15 @@ _CONTROL_TYPE_OPTIONS = [
     selector.SelectOptionDict(value="switch", label="Switch"),
     selector.SelectOptionDict(value="fan", label="Fan"),
 ]
+
+_FAN_SPEED_SELECTOR = selector.NumberSelector(
+    selector.NumberSelectorConfig(
+        min=1,
+        max=100,
+        step=1,
+        mode=selector.NumberSelectorMode.SLIDER,
+    )
+)
 
 
 class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -31,7 +50,15 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
     _discovered_name: str
     _room_name: str | None = None
     _scene_control_types: dict[str, str]
+    _default_scene_fan_dimming: dict[str, int]
+    _scenes: dict[str, Scene]
     _tap: pytewke.Tap | None = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> TewkeOptionsFlow:
+        """Return the options flow handler."""
+        return TewkeOptionsFlow()
 
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
@@ -62,7 +89,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self.async_step_zeroconf_confirm()
 
     async def async_step_zeroconf_confirm(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, str] | None = None
     ) -> ConfigFlowResult:
         """Confirm the discovered device and proceed to scene setup."""
         if user_input is not None:
@@ -78,7 +105,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_confirm_control_types(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, str] | None = None
     ) -> ConfigFlowResult:
         """Assign a Home Assistant platform type to each scene."""
         tap = self._tap if self._tap is not None else pytewke.Tap(self._discovered_host)
@@ -88,6 +115,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
             await tap.discover()
 
         scenes = await tap.get_scenes()
+        self._scenes = scenes
         LOGGER.debug("Discovered scenes: %s", scenes)
 
         if user_input is not None:
@@ -97,6 +125,12 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                 for name, control_type in user_input.items()
                 if name in name_to_id
             }
+            fan_scene_ids = [
+                sid for sid, ct in self._scene_control_types.items() if ct == "fan"
+            ]
+            if fan_scene_ids:
+                return await self.async_step_fan_default_speeds()
+            self._default_scene_fan_dimming = {}
             return await self.async_step_placeholder()
 
         if not scenes:
@@ -117,8 +151,41 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
         )
 
+    async def async_step_fan_default_speeds(
+        self, user_input: dict[str, float] | None = None
+    ) -> ConfigFlowResult:
+        """Set a default scene dimming value for each fan scene."""
+        fan_scenes = {
+            scene_id: self._scenes[scene_id]
+            for scene_id, ct in self._scene_control_types.items()
+            if ct == "fan" and scene_id in self._scenes
+        }
+
+        if user_input is not None:
+            name_to_id = {
+                scene.name: scene_id for scene_id, scene in fan_scenes.items()
+            }
+            self._default_scene_fan_dimming = {
+                name_to_id[name]: int(value)
+                for name, value in user_input.items()
+                if name in name_to_id
+            }
+            return await self.async_step_placeholder()
+
+        return self.async_show_form(
+            step_id="fan_default_speeds",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        scene.name, default=DEFAULT_SCENE_FAN_DIMMING
+                    ): _FAN_SPEED_SELECTOR
+                    for scene in fan_scenes.values()
+                }
+            ),
+        )
+
     async def async_step_placeholder(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, str] | None = None
     ) -> ConfigFlowResult:
         """Final confirmation before creating the config entry."""  # noqa: D401
         if user_input is not None:
@@ -129,10 +196,70 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_NAME: self._discovered_name,
                     "room_name": self._room_name,
                     "scene_control_types": self._scene_control_types or {},
+                    CONF_DEFAULT_SCENE_FAN_DIMMING: getattr(
+                        self, "_default_scene_fan_dimming", {}
+                    ),
                 },
             )
 
         return self.async_show_form(
             step_id="placeholder",
             description_placeholders={"name": self._discovered_name},
+        )
+
+
+class TewkeOptionsFlow(OptionsFlow):
+    """Handle options for the Tewke integration."""
+
+    async def async_step_init(
+        self, user_input: dict[str, float] | None = None
+    ) -> ConfigFlowResult:
+        """Manage fan default speed options."""
+        entry = self.config_entry
+        scene_control_types: dict[str, str] = entry.data.get("scene_control_types", {})
+
+        coordinator: TewkeCoordinator | None = (
+            entry.runtime_data.coordinator if entry.runtime_data else None
+        )
+        scenes: dict[str, Scene] = (
+            coordinator.data["scenes"] if coordinator and coordinator.data else {}
+        )
+
+        fan_scenes = {
+            scene_id: scene
+            for scene_id, scene in scenes.items()
+            if scene_control_types.get(scene_id) == "fan"
+        }
+
+        if not fan_scenes:
+            return self.async_abort(reason="no_fan_scenes")
+
+        current_speeds: dict[str, int] = entry.options.get(
+            CONF_DEFAULT_SCENE_FAN_DIMMING
+        ) or entry.data.get(CONF_DEFAULT_SCENE_FAN_DIMMING, {})
+
+        if user_input is not None:
+            name_to_id = {
+                scene.name: scene_id for scene_id, scene in fan_scenes.items()
+            }
+            default_scene_fan_dimming = {
+                name_to_id[name]: int(value)
+                for name, value in user_input.items()
+                if name in name_to_id
+            }
+            return self.async_create_entry(
+                data={CONF_DEFAULT_SCENE_FAN_DIMMING: default_scene_fan_dimming}
+            )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        scene.name,
+                        default=current_speeds.get(scene_id, DEFAULT_SCENE_FAN_DIMMING),
+                    ): _FAN_SPEED_SELECTOR
+                    for scene_id, scene in fan_scenes.items()
+                }
+            ),
         )
