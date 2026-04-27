@@ -1,5 +1,21 @@
 """Utilities for the Tewke integration."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .const import CONF_DEFAULT_SCENE_FAN_DIMMING, DEFAULT_SCENE_FAN_DIMMING
+
+if TYPE_CHECKING:
+    from .data import TewkeConfigEntry
+
+
+def _get_default_scene_fan_dimming(entry: TewkeConfigEntry) -> dict[str, int]:
+    """Return per-scene fan dimming defaults, preferring options over initial data."""
+    return entry.options.get(CONF_DEFAULT_SCENE_FAN_DIMMING) or entry.data.get(
+        CONF_DEFAULT_SCENE_FAN_DIMMING, {}
+    )
+
 
 def _tewke_to_ha_brightness(value: int) -> int:
     """

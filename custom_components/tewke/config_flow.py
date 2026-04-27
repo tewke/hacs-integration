@@ -11,19 +11,22 @@ from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from . import TewkeCoordinator
 from .const import (
     CONF_DEFAULT_SCENE_FAN_DIMMING,
     DEFAULT_SCENE_FAN_DIMMING,
     DOMAIN,
     LOGGER,
 )
+from .util import _get_default_scene_fan_dimming
 
 if TYPE_CHECKING:
     from pytewke.data import Scene
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+
+    from .coordinator import TewkeCoordinator
+    from .data import TewkeConfigEntry
 
 _CONTROL_TYPE_OPTIONS = [
     selector.SelectOptionDict(value="light", label="Light"),
@@ -218,8 +221,8 @@ class TewkeOptionsFlow(OptionsFlow):
         entry = self.config_entry
         scene_control_types: dict[str, str] = entry.data.get("scene_control_types", {})
 
-        coordinator: TewkeCoordinator | None = (
-            entry.runtime_data.coordinator if entry.runtime_data else None
+        coordinator: TewkeCoordinator | None = getattr(
+            getattr(entry, "runtime_data", None), "coordinator", None
         )
         scenes: dict[str, Scene] = (
             coordinator.data["scenes"] if coordinator and coordinator.data else {}
@@ -234,9 +237,7 @@ class TewkeOptionsFlow(OptionsFlow):
         if not fan_scenes:
             return self.async_abort(reason="no_fan_scenes")
 
-        current_speeds: dict[str, int] = entry.options.get(
-            CONF_DEFAULT_SCENE_FAN_DIMMING
-        ) or entry.data.get(CONF_DEFAULT_SCENE_FAN_DIMMING, {})
+        current_speeds = _get_default_scene_fan_dimming(entry)
 
         if user_input is not None:
             name_to_id = {
