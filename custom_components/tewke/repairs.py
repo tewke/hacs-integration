@@ -38,7 +38,7 @@ _MAX_BATCH_SCENES = 50
 
 
 class TewkeNewSceneRepairFlow(RepairsFlow):
-    """Repair flow to configure all pending scenes for a device in one step."""
+    """Repair flow to configure pending scenes for a device, up to one batch per invocation."""
 
     def __init__(self, entry: TewkeConfigEntry) -> None:
         """Initialise the flow."""
