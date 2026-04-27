@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytewke
-from homeassistant.const import CONF_HOST, Platform
+from homeassistant.const import CONF_HOST, CONF_NAME, Platform
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import issue_registry as ir
 from pytewke.error import PyTewkeDiscoveryError
 
@@ -182,6 +183,21 @@ async def async_setup_entry(
         tewke_coordinator.async_set_updated_data(
             {**tewke_coordinator.data, "config": config_data}
         )
+
+        new_name = config_data.device_name
+        if new_name and new_name != entry.data.get(CONF_NAME):
+            LOGGER.debug("Device renamed to %r, updating HA", new_name)
+            hass.config_entries.async_update_entry(
+                entry,
+                title=new_name,
+                data={**entry.data, CONF_NAME: new_name},
+            )
+            device_registry = dr.async_get(hass)
+            device = device_registry.async_get_device(
+                identifiers={(DOMAIN, entry.unique_id or entry.entry_id)}
+            )
+            if device:
+                device_registry.async_update_device(device.id, name=new_name)
 
     await tap.observe(
         scene_callback=_on_scene_update,
