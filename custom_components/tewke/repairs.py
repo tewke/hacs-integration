@@ -69,6 +69,19 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
         if user_input is not None:
             return await self._async_apply_results(user_input)
 
+        # Re-filter against current pending_scenes to drop any externally removed scenes.
+        pending: dict[str, Scene] = (
+            self.entry.runtime_data.pending_scenes
+            if hasattr(self.entry, "runtime_data")
+            else {}
+        )
+        self._pending_list = [
+            (sid, scene) for sid, scene in self._pending_list if sid in pending
+        ]
+
+        if not self._pending_list:
+            return self.async_abort(reason="no_new_scenes")
+
         schema = vol.Schema(
             {
                 vol.Required(f"scene_{i}", default="light"): _CONTROL_TYPE_SELECTOR
