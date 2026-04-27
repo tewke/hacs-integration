@@ -19,7 +19,7 @@
         "description": "Set the default scene value (1–100) to be applied when each scene is turned on without a specific value.",
         "title": "Default scene dimming"
       },
-      "placeholder": {
+      "confirmation": {
         "description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
         "title": "Final setup"
       }
