@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 
 import voluptuous as vol
 from homeassistant.components.repairs import RepairsFlow
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers import selector
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DISPATCHER_ADD_SCENES, DOMAIN, LOGGER
+from .const import CONF_DISABLED_SCENES, DISPATCHER_ADD_SCENES, DOMAIN, LOGGER
 
 if TYPE_CHECKING:
     from pytewke.data import Scene
@@ -82,23 +83,35 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
         if not self._pending_list:
             return self.async_abort(reason="no_new_scenes")
 
-        schema = vol.Schema(
-            {
-                vol.Required(f"scene_{i}", default="light"): _CONTROL_TYPE_SELECTOR
-                for i in range(len(self._pending_list))
-            }
-        )
+        fields: dict = {}
+        placeholders: dict[str, str] = {"name": self.entry.title}
+        for i, (_, scene) in enumerate(self._pending_list):
+            fields[vol.Required(f"scene_section_{i}")] = section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            f"enabled_scene_{i}", default=True
+                        ): selector.BooleanSelector(),
+                        vol.Required(
+                            f"scene_{i}", default="light"
+                        ): _CONTROL_TYPE_SELECTOR,
+                    }
+                )
+            )
+            fields[vol.Optional(f"enabled_scene_{i}", default=True)] = (
+                selector.BooleanSelector()
+            )
+
+            fields[vol.Required(f"scene_{i}", default="light")] = _CONTROL_TYPE_SELECTOR
+            placeholders[f"scene_{i}"] = scene.name
+            placeholders[f"enabled_scene_{i}"] = f"{scene.name} enabled"
+
+        schema = vol.Schema(fields)
 
         return self.async_show_form(
             step_id="configure_scenes",
             data_schema=schema,
-            description_placeholders={
-                "name": self.entry.title,
-                **{
-                    f"scene_{i}": scene.name
-                    for i, (_, scene) in enumerate(self._pending_list)
-                },
-            },
+            description_placeholders=placeholders,
         )
 
     async def _async_apply_results(self, user_input: dict[str, str]) -> FlowResult:
@@ -106,6 +119,18 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
         pending: dict[str, Scene] = self.entry.runtime_data.pending_scenes
         new_control_types = self.entry.runtime_data.scene_control_types.copy()
         added_scenes: list[Scene] = []
+
+        newly_disabled = [
+            scene_id
+            for i, (scene_id, _) in enumerate(self._pending_list)
+            if not user_input.get(f"enabled_scene_{i}", True)
+        ]
+        existing_disabled: list[str] = list(
+            self.entry.data.get(CONF_DISABLED_SCENES, [])
+        )
+        merged_disabled = existing_disabled + [
+            sid for sid in newly_disabled if sid not in existing_disabled
+        ]
 
         for i, (scene_id, scene) in enumerate(self._pending_list):
             control_type = user_input.get(f"scene_{i}", "light")
@@ -116,7 +141,11 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
 
         self.hass.config_entries.async_update_entry(
             self.entry,
-            data={**self.entry.data, "scene_control_types": new_control_types},
+            data={
+                **self.entry.data,
+                "scene_control_types": new_control_types,
+                CONF_DISABLED_SCENES: merged_disabled,
+            },
         )
         self.entry.runtime_data.scene_control_types = new_control_types
 

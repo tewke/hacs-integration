@@ -12,11 +12,11 @@
         "title": "Tewke device found"
       },
       "confirm_control_types": {
-        "description": "Choose the Home Assistant platform type for each scene.\n\n**Light** (default) — the scene appears as a dimmable light entity.\n**Switch** — use this if you want to remove brightness control entirely.\n**Fan** — use this if you want brightness or speed control, but do not want the scene to appear as a light entity.",
+        "description": "Choose the Home Assistant platform type for each scene, and optionally mark scenes to start disabled.\n\n**Light** (default) \u2014 the scene appears as a dimmable light entity.\n**Switch** \u2014 use this if you want to remove brightness control entirely.\n**Fan** \u2014 use this if you want brightness or speed control, but do not want the scene to appear as a light entity.",
         "title": "Configure scene types"
       },
       "fan_default_speeds": {
-        "description": "Set the default scene value (1–100) to be applied when each scene is turned on without a specific value.",
+        "description": "Set the default scene value (1\u2013100) to be applied when each scene is turned on without a specific value.",
         "title": "Default scene dimming"
       },
       "confirmation": {
@@ -31,7 +31,7 @@
     },
     "step": {
       "init": {
-        "description": "Set the default scene value (1–100) to be applied when each scene is turned on without a specific value.",
+        "description": "Set the default scene value (1\u2013100) to be applied when each scene is turned on without a specific value.",
         "title": "Default scene dimming"
       }
     }
@@ -46,6 +46,7 @@
             "title": "Configure new scenes for {name}",
             "description": "New scenes were found on your Tewke device **{name}**. Assign a Home Assistant platform type to each one below.",
             "data": {
+              "scene_section_0": "{scene_0}",
               "scene_0": "{scene_0}",
               "scene_1": "{scene_1}",
               "scene_2": "{scene_2}",
@@ -95,7 +96,62 @@
               "scene_46": "{scene_46}",
               "scene_47": "{scene_47}",
               "scene_48": "{scene_48}",
-              "scene_49": "{scene_49}"
+              "scene_49": "{scene_49}",
+              "enabled_scene_0": "{enabled_scene_0}",
+              "enabled_scene_1": "{enabled_scene_1}",
+              "enabled_scene_2": "{enabled_scene_2}",
+              "enabled_scene_3": "{enabled_scene_3}",
+              "enabled_scene_4": "{enabled_scene_4}",
+              "enabled_scene_5": "{enabled_scene_5}",
+              "enabled_scene_6": "{enabled_scene_6}",
+              "enabled_scene_7": "{enabled_scene_7}",
+              "enabled_scene_8": "{enabled_scene_8}",
+              "enabled_scene_9": "{enabled_scene_9}",
+              "enabled_scene_10": "{enabled_scene_10}",
+              "enabled_scene_11": "{enabled_scene_11}",
+              "enabled_scene_12": "{enabled_scene_12}",
+              "enabled_scene_13": "{enabled_scene_13}",
+              "enabled_scene_14": "{enabled_scene_14}",
+              "enabled_scene_15": "{enabled_scene_15}",
+              "enabled_scene_16": "{enabled_scene_16}",
+              "enabled_scene_17": "{enabled_scene_17}",
+              "enabled_scene_18": "{enabled_scene_18}",
+              "enabled_scene_19": "{enabled_scene_19}",
+              "enabled_scene_20": "{enabled_scene_20}",
+              "enabled_scene_21": "{enabled_scene_21}",
+              "enabled_scene_22": "{enabled_scene_22}",
+              "enabled_scene_23": "{enabled_scene_23}",
+              "enabled_scene_24": "{enabled_scene_24}",
+              "enabled_scene_25": "{enabled_scene_25}",
+              "enabled_scene_26": "{enabled_scene_26}",
+              "enabled_scene_27": "{enabled_scene_27}",
+              "enabled_scene_28": "{enabled_scene_28}",
+              "enabled_scene_29": "{enabled_scene_29}",
+              "enabled_scene_30": "{enabled_scene_30}",
+              "enabled_scene_31": "{enabled_scene_31}",
+              "enabled_scene_32": "{enabled_scene_32}",
+              "enabled_scene_33": "{enabled_scene_33}",
+              "enabled_scene_34": "{enabled_scene_34}",
+              "enabled_scene_35": "{enabled_scene_35}",
+              "enabled_scene_36": "{enabled_scene_36}",
+              "enabled_scene_37": "{enabled_scene_37}",
+              "enabled_scene_38": "{enabled_scene_38}",
+              "enabled_scene_39": "{enabled_scene_39}",
+              "enabled_scene_40": "{enabled_scene_40}",
+              "enabled_scene_41": "{enabled_scene_41}",
+              "enabled_scene_42": "{enabled_scene_42}",
+              "enabled_scene_43": "{enabled_scene_43}",
+              "enabled_scene_44": "{enabled_scene_44}",
+              "enabled_scene_45": "{enabled_scene_45}",
+              "enabled_scene_46": "{enabled_scene_46}",
+              "enabled_scene_47": "{enabled_scene_47}",
+              "enabled_scene_48": "{enabled_scene_48}",
+              "enabled_scene_49": "{enabled_scene_49}"
+            },
+            "sections": {
+              "scene_section_0": {"name": "Hardcoded Test Title",
+                "description": "Scene {scene_0} is a {scene_type} scene."
+              }
             }
           }
         },

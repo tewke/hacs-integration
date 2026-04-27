@@ -13,6 +13,7 @@ from homeassistant.helpers import selector
 
 from .const import (
     CONF_DEFAULT_SCENE_FAN_DIMMING,
+    CONF_DISABLED_SCENES,
     DEFAULT_SCENE_FAN_DIMMING,
     DOMAIN,
     LOGGER,
@@ -53,6 +54,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
     _room_name: str | None = None
     _scene_control_types: dict[str, str]
     _default_scene_fan_dimming: dict[str, int]
+    _disabled_scenes: list[str]
     _scenes: dict[str, Scene]
     _tap: pytewke.Tap | None = None
 
@@ -127,6 +129,11 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                 for name, control_type in user_input.items()
                 if name in name_to_id
             }
+            self._disabled_scenes = [
+                name_to_id[name]
+                for name in name_to_id
+                if not user_input.get(name, {}).get(f"Enabled", True)
+            ]
             fan_scene_ids = [
                 sid for sid, ct in self._scene_control_types.items() if ct == "fan"
             ]
@@ -138,19 +145,20 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
         if not scenes:
             return await self.async_step_confirmation()
 
+        fields: dict = {}
+        for scene in scenes.values():
+            fields[vol.Optional(f"{scene.name} enabled", default=True)] = (
+                selector.BooleanSelector()
+            )
+            fields[vol.Required(scene.name, default="light")] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=_CONTROL_TYPE_OPTIONS,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            )
         return self.async_show_form(
             step_id="confirm_control_types",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(scene.name, default="light"): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=_CONTROL_TYPE_OPTIONS,
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        )
-                    )
-                    for scene in scenes.values()
-                }
-            ),
+            data_schema=vol.Schema(fields),
         )
 
     async def async_step_fan_default_speeds(
@@ -201,6 +209,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_DEFAULT_SCENE_FAN_DIMMING: getattr(
                         self, "_default_scene_fan_dimming", {}
                     ),
+                    CONF_DISABLED_SCENES: getattr(self, "_disabled_scenes", []),
                 },
             )
 

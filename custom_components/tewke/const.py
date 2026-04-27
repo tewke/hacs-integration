@@ -8,4 +8,5 @@ DOMAIN = "tewke"
 DISPATCHER_ADD_SCENES = "tewke_add_scenes"
 
 CONF_DEFAULT_SCENE_FAN_DIMMING = "default_scene_fan_dimming"
+CONF_DISABLED_SCENES = "disabled_scenes"
 DEFAULT_SCENE_FAN_DIMMING = 50
