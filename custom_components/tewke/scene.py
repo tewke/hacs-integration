@@ -14,7 +14,7 @@ held locally for optimistic rendering.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
@@ -101,7 +101,7 @@ class TewkeSceneEntity(TewkeEntity):
             await self.coordinator.async_request_refresh()
         except PyTewkeInvalidWallDockError:
             LOGGER.error("Attempted to set Scene while not connected to Wall Dock")
-        except (PyTewkeInvalidRequestError, RuntimeError):
+        except PyTewkeInvalidRequestError, RuntimeError:
             action = "activating" if state else "deactivating"
             LOGGER.exception("Internal error %s Tewke scene %s", action, self._scene_id)
         except (
@@ -121,11 +121,11 @@ class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
         """Initialise the switch."""
         super().__init__(coordinator, scene)
 
-    async def async_turn_on(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_turn_on(self, **_kwargs: object) -> None:
         """Activate the scene."""
         await self._async_set_scene(state=True)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **_kwargs: object) -> None:
         """Deactivate the scene."""
         await self._async_set_scene(state=False)
 
@@ -145,13 +145,13 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
         super().__init__(coordinator, scene)
         self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: object) -> None:
         """Activate the scene, optionally at a specific brightness."""
-        ha_brightness = kwargs.get(ATTR_BRIGHTNESS, self.brightness or 255)
+        ha_brightness = int(kwargs.get(ATTR_BRIGHTNESS) or self.brightness or 255)
         tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
         await self._async_set_scene(state=True, brightness=tewke_brightness)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **_kwargs: object) -> None:
         """Deactivate the scene."""
         await self._async_set_scene(state=False)
 
@@ -171,9 +171,15 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         | FanEntityFeature.TURN_OFF
     )
 
-    def __init__(self, coordinator: TewkeCoordinator, scene: Scene) -> None:
+    def __init__(
+        self,
+        coordinator: TewkeCoordinator,
+        scene: Scene,
+        default_dimming: int = 50,
+    ) -> None:
         """Initialise the scene fan."""
         super().__init__(coordinator, scene)
+        self._default_dimming = default_dimming
 
     async def _async_set_percentage(self, percentage: int | None) -> None:
         """Set fan speed. A percentage of 0 turns the fan off."""
@@ -190,11 +196,13 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         self,
         percentage: int | None = None,
         preset_mode: str | None = None,  # noqa: ARG002
-        **kwargs: Any,  # noqa: ARG002
+        **_kwargs: object,
     ) -> None:
-        """Turn on the fan, optionally at a specific speed."""
-        await self._async_set_percentage(percentage)
+        """Turn on the fan, using the default scene dimming value if no percentage is given."""
+        await self._async_set_percentage(
+            percentage if percentage is not None else self._default_dimming
+        )
 
-    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **_kwargs: object) -> None:
         """Turn off the fan."""
         await self._async_set_scene(state=False)

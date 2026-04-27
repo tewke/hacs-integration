@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import voluptuous as vol
 from homeassistant.components.repairs import RepairsFlow
@@ -33,7 +33,7 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
         self.entry = entry
 
     async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, str] | None = None
     ) -> FlowResult:
         """
         Handle the configuration of new scenes.

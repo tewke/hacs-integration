@@ -930,7 +930,6 @@ dependencies = [
     { name = "colorlog" },
     { name = "homeassistant" },
     { name = "pytewke" },
-    { name = "ruff" },
     { name = "voluptuous" },
 ]
 
@@ -944,8 +943,7 @@ dev = [
 requires-dist = [
     { name = "colorlog", specifier = "==6.10.1" },
     { name = "homeassistant", specifier = "==2026.3.3" },
-    { name = "pytewke", git = "https://gitlab.com/tewke/open-source/pytewke.git?rev=2eb1a9ff094db69dd6cf5007431fc47e47977f58" },
-    { name = "ruff", specifier = ">=0.15.7" },
+    { name = "pytewke", specifier = ">=0.4.0" },
     { name = "voluptuous", specifier = ">=0.15.2" },
 ]
 
@@ -1647,11 +1645,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/08/64/a99f27d3b4347486c
 [[package]]
 name = "pytewke"
 version = "0.4.0"
-source = { git = "https://gitlab.com/tewke/open-source/pytewke.git?rev=2eb1a9ff094db69dd6cf5007431fc47e47977f58#2eb1a9ff094db69dd6cf5007431fc47e47977f58" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiocoap" },
     { name = "cbor2" },
     { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8d/00/49fbbf51089bab0b28d126a203dfa6d1a71d7c6425937dc8491f4a530209/pytewke-0.4.0.tar.gz", hash = "sha256:a054deff2d772ab9eb305125c9a7573a78bf6a598281dbfca929166666db1b0f", size = 18000910, upload-time = "2026-04-20T15:44:09.385Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/94/9708db3eeb66ac5d9db75a385d6f392f3c0892fc4b2d9d5946be0f32f7e4/pytewke-0.4.0-py3-none-any.whl", hash = "sha256:9306cf2a92919241c18a1f6e6786bc8e2d570dfb672d65602547092c627f0997", size = 21116, upload-time = "2026-04-20T15:44:06.111Z" },
 ]
 
 [[package]]

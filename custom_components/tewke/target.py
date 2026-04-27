@@ -12,7 +12,7 @@ Dimmable targets expose "ColorMode.BRIGHTNESS"; non-dimmable ones expose
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
 from pytewke.error import (
@@ -85,14 +85,13 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
             return None
         return _tewke_to_ha_brightness(target.brightness)
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: object) -> None:
         """Turn on the output, optionally at a specific brightness."""
         target = self._target
         if target is None:
             return
         if ATTR_BRIGHTNESS in kwargs:
-            ha_brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
-            tewke_brightness = _ha_to_tewke_brightness(ha_brightness)
+            tewke_brightness = _ha_to_tewke_brightness(int(kwargs[ATTR_BRIGHTNESS]))
         elif target.is_dimmable:
             tewke_brightness = target.brightness if target.brightness > 0 else 100
         else:
@@ -120,7 +119,7 @@ class TewkeTargetLight(TewkeEntity, LightEntity):
         ) as e:
             LOGGER.error("Error activating Tewke target %s: %s", self._target_index, e)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_turn_off(self, **_kwargs: object) -> None:
         """Turn off the output."""
         try:
             await self.coordinator.config_entry.runtime_data.tap.set_target(
