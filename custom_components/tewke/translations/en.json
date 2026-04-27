@@ -44,7 +44,7 @@
         "step": {
           "configure_scenes": {
             "title": "Configure new scenes for {name}",
-            "description": "New scenes were found on your Tewke device **{name}**. Assign a Home Assistant platform type to each one.",
+            "description": "New scenes were found on your Tewke device **{name}**. Assign a Home Assistant platform type to each one below.",
             "data": {
               "scene_0": "{scene_0}",
               "scene_1": "{scene_1}",
