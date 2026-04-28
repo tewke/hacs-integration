@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import voluptuous as vol
+from homeassistant.components import logger
 from homeassistant.components.repairs import RepairsFlow
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import issue_registry as ir
@@ -14,10 +15,9 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from .const import CONF_DISABLED_SCENES, DISPATCHER_ADD_SCENES, DOMAIN, LOGGER
 
 if TYPE_CHECKING:
-    from pytewke.data import Scene
-
     from homeassistant.core import HomeAssistant
     from homeassistant.data_entry_flow import FlowResult
+    from pytewke.data import Scene
 
     from .data import TewkeConfigEntry
 
@@ -47,8 +47,7 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
         self._pending_list: list[tuple[str, Scene]] = []
 
     async def async_step_init(
-        self,
-        user_input: dict[str, str] | None = None,  # noqa: ARG002
+        self, _user_input: dict[str, str] | None = None
     ) -> FlowResult:
         """Load pending scenes and hand off to the batch configuration step."""
         pending: dict[str, Scene] = (
@@ -90,27 +89,19 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
                 vol.Schema(
                     {
                         vol.Optional(
-                            f"enabled_scene_{i}", default=True
+                            "enabled_text", default=True
                         ): selector.BooleanSelector(),
                         vol.Required(
-                            f"scene_{i}", default="light"
+                            "scene_text", default="light"
                         ): _CONTROL_TYPE_SELECTOR,
                     }
                 )
             )
-            fields[vol.Optional(f"enabled_scene_{i}", default=True)] = (
-                selector.BooleanSelector()
-            )
-
-            fields[vol.Required(f"scene_{i}", default="light")] = _CONTROL_TYPE_SELECTOR
-            placeholders[f"scene_{i}"] = scene.name
-            placeholders[f"enabled_scene_{i}"] = f"{scene.name} enabled"
-
-        schema = vol.Schema(fields)
+            placeholders[f"scene_section_{i}"] = scene.name
 
         return self.async_show_form(
             step_id="configure_scenes",
-            data_schema=schema,
+            data_schema=vol.Schema(fields),
             description_placeholders=placeholders,
         )
 
@@ -119,25 +110,37 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
         pending: dict[str, Scene] = self.entry.runtime_data.pending_scenes
         new_control_types = self.entry.runtime_data.scene_control_types.copy()
         added_scenes: list[Scene] = []
+        newly_disabled = []
+        index_name_to_id = {
+            f"scene_section_{i}": sid for i, (sid, _) in enumerate(self._pending_list)
+        }
+        scene_configs = user_input.items()
 
-        newly_disabled = [
-            scene_id
-            for i, (scene_id, _) in enumerate(self._pending_list)
-            if not user_input.get(f"enabled_scene_{i}", True)
-        ]
+        for index_name, config in scene_configs:
+            if index_name not in index_name_to_id:
+                continue
+
+            if not isinstance(config, dict) or not all(
+                isinstance(k, str) and isinstance(v, (str, bool))
+                for k, v in config.items()
+            ):
+                continue
+
+            scene_id = index_name_to_id[index_name]
+            added_scenes.append(pending[scene_id])
+
+            new_control_types[scene_id] = config["scene_text"]
+            if not config["enabled_text"]:
+                newly_disabled.append(scene_id)
+
+            del pending[scene_id]
+
         existing_disabled: list[str] = list(
             self.entry.data.get(CONF_DISABLED_SCENES, [])
         )
         merged_disabled = existing_disabled + [
             sid for sid in newly_disabled if sid not in existing_disabled
         ]
-
-        for i, (scene_id, scene) in enumerate(self._pending_list):
-            control_type = user_input.get(f"scene_{i}", "light")
-            if scene_id in pending:
-                added_scenes.append(scene)
-                new_control_types[scene_id] = control_type
-                del pending[scene_id]
 
         self.hass.config_entries.async_update_entry(
             self.entry,
