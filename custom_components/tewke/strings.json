@@ -1,163 +1,110 @@
 {
-  "config": {
-    "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-      "cannot_identify": "Unable to determine a unique ID for this device. Please check your device and network configuration.",
-      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
-      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
-    },
-    "step": {
-      "zeroconf_confirm": {
-        "description": "You are setting up the Tewke device **{name}**{room_suffix}. Click Submit to continue.",
-        "title": "Tewke device found"
-      },
-      "confirm_control_types": {
-        "description": "Choose the Home Assistant platform type for each scene, and optionally mark scenes to start disabled.\n\n**Light** (default) \u2014 the scene appears as a dimmable light entity.\n**Switch** \u2014 use this if you want to remove brightness control entirely.\n**Fan** \u2014 use this if you want brightness or speed control, but do not want the scene to appear as a light entity.",
-        "title": "Configure scene types"
-      },
-      "fan_default_speeds": {
-        "description": "Set the default scene value (1\u2013100) to be applied when each scene is turned on without a specific value.",
-        "title": "Default scene dimming"
-      },
-      "confirmation": {
-        "description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
-        "title": "Final setup"
-      }
-    }
-  },
-  "options": {
-    "abort": {
-      "no_fan_scenes": "No fan scenes are configured for this device."
-    },
-    "step": {
-      "init": {
-        "description": "Set the default scene value (1\u2013100) to be applied when each scene is turned on without a specific value.",
-        "title": "Default scene dimming"
-      }
-    }
-  },
-  "issues": {
-    "new_scenes_found": {
-      "title": "New Scenes discovered",
-      "description": "New Scenes have been discovered on your Tewke device {name}.\n\nPlease configure them to make them available in Home Assistant.",
-      "fix_flow": {
-        "step": {
-          "configure_scenes": {
-            "title": "Configure new scenes for {name}",
-            "description": "New scenes were found on your Tewke device **{name}**. Assign a Home Assistant platform type to each one below.",
-            "data": {
-              "scene_0": "{scene_0}",
-              "scene_1": "{scene_1}",
-              "scene_2": "{scene_2}",
-              "scene_3": "{scene_3}",
-              "scene_4": "{scene_4}",
-              "scene_5": "{scene_5}",
-              "scene_6": "{scene_6}",
-              "scene_7": "{scene_7}",
-              "scene_8": "{scene_8}",
-              "scene_9": "{scene_9}",
-              "scene_10": "{scene_10}",
-              "scene_11": "{scene_11}",
-              "scene_12": "{scene_12}",
-              "scene_13": "{scene_13}",
-              "scene_14": "{scene_14}",
-              "scene_15": "{scene_15}",
-              "scene_16": "{scene_16}",
-              "scene_17": "{scene_17}",
-              "scene_18": "{scene_18}",
-              "scene_19": "{scene_19}",
-              "scene_20": "{scene_20}",
-              "scene_21": "{scene_21}",
-              "scene_22": "{scene_22}",
-              "scene_23": "{scene_23}",
-              "scene_24": "{scene_24}",
-              "scene_25": "{scene_25}",
-              "scene_26": "{scene_26}",
-              "scene_27": "{scene_27}",
-              "scene_28": "{scene_28}",
-              "scene_29": "{scene_29}",
-              "scene_30": "{scene_30}",
-              "scene_31": "{scene_31}",
-              "scene_32": "{scene_32}",
-              "scene_33": "{scene_33}",
-              "scene_34": "{scene_34}",
-              "scene_35": "{scene_35}",
-              "scene_36": "{scene_36}",
-              "scene_37": "{scene_37}",
-              "scene_38": "{scene_38}",
-              "scene_39": "{scene_39}",
-              "scene_40": "{scene_40}",
-              "scene_41": "{scene_41}",
-              "scene_42": "{scene_42}",
-              "scene_43": "{scene_43}",
-              "scene_44": "{scene_44}",
-              "scene_45": "{scene_45}",
-              "scene_46": "{scene_46}",
-              "scene_47": "{scene_47}",
-              "scene_48": "{scene_48}",
-              "scene_49": "{scene_49}",
-              "enabled_scene_0": "{enabled_scene_0}",
-              "enabled_scene_1": "{enabled_scene_1}",
-              "enabled_scene_2": "{enabled_scene_2}",
-              "enabled_scene_3": "{enabled_scene_3}",
-              "enabled_scene_4": "{enabled_scene_4}",
-              "enabled_scene_5": "{enabled_scene_5}",
-              "enabled_scene_6": "{enabled_scene_6}",
-              "enabled_scene_7": "{enabled_scene_7}",
-              "enabled_scene_8": "{enabled_scene_8}",
-              "enabled_scene_9": "{enabled_scene_9}",
-              "enabled_scene_10": "{enabled_scene_10}",
-              "enabled_scene_11": "{enabled_scene_11}",
-              "enabled_scene_12": "{enabled_scene_12}",
-              "enabled_scene_13": "{enabled_scene_13}",
-              "enabled_scene_14": "{enabled_scene_14}",
-              "enabled_scene_15": "{enabled_scene_15}",
-              "enabled_scene_16": "{enabled_scene_16}",
-              "enabled_scene_17": "{enabled_scene_17}",
-              "enabled_scene_18": "{enabled_scene_18}",
-              "enabled_scene_19": "{enabled_scene_19}",
-              "enabled_scene_20": "{enabled_scene_20}",
-              "enabled_scene_21": "{enabled_scene_21}",
-              "enabled_scene_22": "{enabled_scene_22}",
-              "enabled_scene_23": "{enabled_scene_23}",
-              "enabled_scene_24": "{enabled_scene_24}",
-              "enabled_scene_25": "{enabled_scene_25}",
-              "enabled_scene_26": "{enabled_scene_26}",
-              "enabled_scene_27": "{enabled_scene_27}",
-              "enabled_scene_28": "{enabled_scene_28}",
-              "enabled_scene_29": "{enabled_scene_29}",
-              "enabled_scene_30": "{enabled_scene_30}",
-              "enabled_scene_31": "{enabled_scene_31}",
-              "enabled_scene_32": "{enabled_scene_32}",
-              "enabled_scene_33": "{enabled_scene_33}",
-              "enabled_scene_34": "{enabled_scene_34}",
-              "enabled_scene_35": "{enabled_scene_35}",
-              "enabled_scene_36": "{enabled_scene_36}",
-              "enabled_scene_37": "{enabled_scene_37}",
-              "enabled_scene_38": "{enabled_scene_38}",
-              "enabled_scene_39": "{enabled_scene_39}",
-              "enabled_scene_40": "{enabled_scene_40}",
-              "enabled_scene_41": "{enabled_scene_41}",
-              "enabled_scene_42": "{enabled_scene_42}",
-              "enabled_scene_43": "{enabled_scene_43}",
-              "enabled_scene_44": "{enabled_scene_44}",
-              "enabled_scene_45": "{enabled_scene_45}",
-              "enabled_scene_46": "{enabled_scene_46}",
-              "enabled_scene_47": "{enabled_scene_47}",
-              "enabled_scene_48": "{enabled_scene_48}",
-              "enabled_scene_49": "{enabled_scene_49}"
-            },
-            "sections": {
-              "scene_section_0": {"name": "Hardcoded Test Title",
-                "description": "Scene {scene_0} is a {scene_type} scene."
-              }
-            }
-          }
-        },
-        "abort": {
-          "no_new_scenes": "There are no new scenes pending configuration for your Tewke device {name}."
-        }
-      }
-    }
-  }
+	"config": {
+		"abort": {
+			"already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+			"cannot_identify": "Unable to determine a unique ID for this device. Please check your device and network configuration.",
+			"no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
+			"single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
+		},
+		"step": {
+			"zeroconf_confirm": {
+				"description": "You are setting up the Tewke device **{name}**{room_suffix}. Click Submit to continue.",
+				"title": "Tewke device found"
+			},
+			"confirm_control_types": {
+				"description": "Choose the Home Assistant platform type for each scene, and optionally mark scenes to start disabled.\n\n**Light** (default) \u2014 the scene appears as a dimmable light entity.\n**Switch** \u2014 use this if you want to remove brightness control entirely.\n**Fan** \u2014 use this if you want brightness or speed control, but do not want the scene to appear as a light entity.",
+				"title": "Configure scene types"
+			},
+			"fan_default_speeds": {
+				"description": "Set the default scene value (1\u2013100) to be applied when each scene is turned on without a specific value.",
+				"title": "Default scene dimming"
+			},
+			"confirmation": {
+				"description": "Your Tewke device **{name}** is ready to be added to Home Assistant. Click Submit to complete the setup.",
+				"title": "Final setup"
+			}
+		}
+	},
+	"options": {
+		"abort": {
+			"no_fan_scenes": "No fan scenes are configured for this device."
+		},
+		"step": {
+			"init": {
+				"description": "Set the default scene value (1\u2013100) to be applied when each scene is turned on without a specific value.",
+				"title": "Default scene dimming"
+			}
+		}
+	},
+	"issues": {
+		"new_scenes_found": {
+			"title": "New Scenes discovered",
+			"description": "New Scenes have been discovered on your Tewke device {name}.\n\nPlease configure them to make them available in Home Assistant.",
+			"fix_flow": {
+				"step": {
+					"configure_scenes": {
+						"title": "Configure new scenes for {name}",
+						"description": "New scenes were found on your Tewke device **{name}**. Assign a Home Assistant platform type to each one below.",
+						"data": {
+							"scene_text": "Control type",
+							"enabled_text": "Enabled",
+							"scene_section_0": "{scene_section_0}",
+							"scene_section_1": "{scene_section_1}",
+							"scene_section_2": "{scene_section_2}",
+							"scene_section_3": "{scene_section_3}",
+							"scene_section_4": "{scene_section_4}",
+							"scene_section_5": "{scene_section_5}",
+							"scene_section_6": "{scene_section_6}",
+							"scene_section_7": "{scene_section_7}",
+							"scene_section_8": "{scene_section_8}",
+							"scene_section_9": "{scene_section_9}",
+							"scene_section_10": "{scene_section_10}",
+							"scene_section_11": "{scene_section_11}",
+							"scene_section_12": "{scene_section_12}",
+							"scene_section_13": "{scene_section_13}",
+							"scene_section_14": "{scene_section_14}",
+							"scene_section_15": "{scene_section_15}",
+							"scene_section_16": "{scene_section_16}",
+							"scene_section_17": "{scene_section_17}",
+							"scene_section_18": "{scene_section_18}",
+							"scene_section_19": "{scene_section_19}",
+							"scene_section_20": "{scene_section_20}",
+							"scene_section_21": "{scene_section_21}",
+							"scene_section_22": "{scene_section_22}",
+							"scene_section_23": "{scene_section_23}",
+							"scene_section_24": "{scene_section_24}",
+							"scene_section_25": "{scene_section_25}",
+							"scene_section_26": "{scene_section_26}",
+							"scene_section_27": "{scene_section_27}",
+							"scene_section_28": "{scene_section_28}",
+							"scene_section_29": "{scene_section_29}",
+							"scene_section_30": "{scene_section_30}",
+							"scene_section_31": "{scene_section_31}",
+							"scene_section_32": "{scene_section_32}",
+							"scene_section_33": "{scene_section_33}",
+							"scene_section_34": "{scene_section_34}",
+							"scene_section_35": "{scene_section_35}",
+							"scene_section_36": "{scene_section_36}",
+							"scene_section_37": "{scene_section_37}",
+							"scene_section_38": "{scene_section_38}",
+							"scene_section_39": "{scene_section_39}",
+							"scene_section_40": "{scene_section_40}",
+							"scene_section_41": "{scene_section_41}",
+							"scene_section_42": "{scene_section_42}",
+							"scene_section_43": "{scene_section_43}",
+							"scene_section_44": "{scene_section_44}",
+							"scene_section_45": "{scene_section_45}",
+							"scene_section_46": "{scene_section_46}",
+							"scene_section_47": "{scene_section_47}",
+							"scene_section_48": "{scene_section_48}",
+							"scene_section_49": "{scene_section_49}"
+						}
+					}
+				},
+				"abort": {
+					"no_new_scenes": "There are no new scenes pending configuration for your Tewke device {name}."
+				}
+			}
+		}
+	}
 }

@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 
 from .const import (
@@ -21,10 +22,9 @@ from .const import (
 from .util import _get_default_scene_fan_dimming
 
 if TYPE_CHECKING:
-    from pytewke.data import Scene
-
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+    from pytewke.data import Scene
 
     from .coordinator import TewkeCoordinator
 
@@ -60,7 +60,7 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> TewkeOptionsFlow:
+    def async_get_options_flow(_config_entry: ConfigEntry) -> TewkeOptionsFlow:
         """Return the options flow handler."""
         return TewkeOptionsFlow()
 
@@ -124,21 +124,27 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             name_to_id = {scene.name: scene_id for scene_id, scene in scenes.items()}
-            self._scene_control_types = {
-                name_to_id[name]: control_type
-                for name, control_type in user_input.items()
-                if name in name_to_id
-            }
-            self._disabled_scenes = [
-                name_to_id[name]
-                for name in name_to_id
-                if not user_input.get(name, {}).get(f"Enabled", True)
-            ]
-            fan_scene_ids = [
-                sid for sid, ct in self._scene_control_types.items() if ct == "fan"
-            ]
-            if fan_scene_ids:
+            scene_configs = user_input.items()
+            self._scene_control_types = {}
+            self._disabled_scenes = []
+
+            for name, config in scene_configs:
+                if name not in name_to_id:
+                    continue
+
+                if not isinstance(config, dict) or not all(
+                    isinstance(k, str) and isinstance(v, (str, bool))
+                    for k, v in config.items()
+                ):
+                    continue
+
+                self._scene_control_types[name_to_id[name]] = config["Control type"]
+                if not config["Enabled"]:
+                    self._disabled_scenes.append(name_to_id[name])
+
+            if "fan" in self._scene_control_types.values():
                 return await self.async_step_fan_default_speeds()
+
             self._default_scene_fan_dimming = {}
             return await self.async_step_confirmation()
 
@@ -147,13 +153,21 @@ class TewkeConfigFlow(ConfigFlow, domain=DOMAIN):
 
         fields: dict = {}
         for scene in scenes.values():
-            fields[vol.Optional(f"{scene.name} enabled", default=True)] = (
-                selector.BooleanSelector()
-            )
-            fields[vol.Required(scene.name, default="light")] = selector.SelectSelector(
-                selector.SelectSelectorConfig(
-                    options=_CONTROL_TYPE_OPTIONS,
-                    mode=selector.SelectSelectorMode.DROPDOWN,
+            fields[vol.Required(scene.name)] = section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            "Enabled", default=True
+                        ): selector.BooleanSelector(),
+                        vol.Required(
+                            "Control type", default="light"
+                        ): selector.SelectSelector(
+                            selector.SelectSelectorConfig(
+                                options=_CONTROL_TYPE_OPTIONS,
+                                mode=selector.SelectSelectorMode.DROPDOWN,
+                            )
+                        ),
+                    }
                 )
             )
         return self.async_show_form(
