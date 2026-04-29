@@ -127,6 +127,10 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
                 continue
 
             scene_id = index_name_to_id[index_name]
+            if scene_id not in pending:
+                LOGGER.warning("Scene %s no longer pending; skipping", scene_id)
+                continue
+
             added_scenes.append(pending[scene_id])
 
             new_control_types[scene_id] = config["scene_text"]

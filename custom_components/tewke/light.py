@@ -50,7 +50,8 @@ async def async_setup_entry(
             TewkeSceneLight(
                 coordinator=coordinator,
                 scene=scene,
-                enabled_default=scene.id not in disabled_scenes,
+                enabled_default=scene.id
+                not in entry.data.get(CONF_DISABLED_SCENES, []),
             )
             for scene in scenes
             if scene_control_types.get(scene.id) == "light"

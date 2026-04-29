@@ -56,7 +56,8 @@ async def async_setup_entry(
                 default_dimming=current_dimming.get(
                     scene.id, DEFAULT_SCENE_FAN_DIMMING
                 ),
-                enabled_default=scene.id not in disabled_scenes,
+                enabled_default=scene.id
+                not in entry.data.get(CONF_DISABLED_SCENES, []),
             )
             for scene in scenes
             if scene_control_types.get(scene.id) == "fan"

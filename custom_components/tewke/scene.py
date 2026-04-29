@@ -41,7 +41,11 @@ class TewkeSceneEntity(TewkeEntity):
     """A Tewke scene base entity."""
 
     def __init__(
-        self, coordinator: TewkeCoordinator, scene: Scene, enabled_default: bool = True
+        self,
+        coordinator: TewkeCoordinator,
+        scene: Scene,
+        *,
+        enabled_default: bool = True,
     ) -> None:
         """Initialise the scene light."""
         super().__init__(coordinator)
@@ -121,10 +125,14 @@ class TewkeSceneSwitch(TewkeSceneEntity, SwitchEntity):
     """A Tewke scene exposed as a switch."""
 
     def __init__(
-        self, coordinator: TewkeCoordinator, scene: Scene, enabled_default: bool = True
+        self,
+        coordinator: TewkeCoordinator,
+        scene: Scene,
+        *,
+        enabled_default: bool = True,
     ) -> None:
         """Initialise the switch."""
-        super().__init__(coordinator, scene, enabled_default)
+        super().__init__(coordinator, scene, enabled_default=enabled_default)
 
     async def async_turn_on(self, **_kwargs: object) -> None:
         """Activate the scene."""
@@ -146,10 +154,14 @@ class TewkeSceneLight(TewkeSceneEntity, LightEntity):
     _attr_color_mode = ColorMode.BRIGHTNESS
 
     def __init__(
-        self, coordinator: TewkeCoordinator, scene: Scene, enabled_default: bool = True
+        self,
+        coordinator: TewkeCoordinator,
+        scene: Scene,
+        *,
+        enabled_default: bool = True,
     ) -> None:
         """Initialise the scene light."""
-        super().__init__(coordinator, scene, enabled_default)
+        super().__init__(coordinator, scene, enabled_default=enabled_default)
         self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
     async def async_turn_on(self, **kwargs: object) -> None:
@@ -183,11 +195,12 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         self,
         coordinator: TewkeCoordinator,
         scene: Scene,
+        *,
         default_dimming: int = 50,
         enabled_default: bool = True,
     ) -> None:
         """Initialise the scene fan."""
-        super().__init__(coordinator, scene, enabled_default)
+        super().__init__(coordinator, scene, enabled_default=enabled_default)
         self._default_dimming = default_dimming
 
     async def _async_set_percentage(self, percentage: int | None) -> None:
