@@ -99,6 +99,14 @@
 							"scene_section_48": "{scene_section_48}",
 							"scene_section_49": "{scene_section_49}"
 						}
+					},
+					"fan_default_speeds": {
+						"title": "Default scene dimming",
+						"description": "Set the default scene value (1\u2013100) to be applied when each fan scene is turned on without a specific value.",
+						"data": {
+							"fan_scene_0": "{fan_scene_0}",
+							"fan_scene_1": "{fan_scene_1}"
+						}
 					}
 				},
 				"abort": {
