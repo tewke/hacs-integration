@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import voluptuous as vol
-from homeassistant.components import logger
 from homeassistant.components.repairs import RepairsFlow
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import issue_registry as ir
@@ -105,7 +104,9 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
             description_placeholders=placeholders,
         )
 
-    async def _async_apply_results(self, user_input: dict[str, str]) -> FlowResult:
+    async def _async_apply_results(
+        self, user_input: dict[str, dict[str, str | bool]]
+    ) -> FlowResult:
         """Commit all configured scene control types and update HA state."""
         pending: dict[str, Scene] = self.entry.runtime_data.pending_scenes
         new_control_types = self.entry.runtime_data.scene_control_types.copy()
