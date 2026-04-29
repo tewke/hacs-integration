@@ -121,10 +121,12 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
             if index_name not in index_name_to_id:
                 continue
 
-            if not isinstance(config, dict) or not all(
-                isinstance(k, str) and isinstance(v, (str, bool))
-                for k, v in config.items()
-            ):
+            if not isinstance(config, dict):
+                continue
+
+            scene_text = config.get("scene_text")
+            enabled_text = config.get("enabled_text", True)
+            if not isinstance(scene_text, str) or not isinstance(enabled_text, bool):
                 continue
 
             scene_id = index_name_to_id[index_name]
@@ -134,8 +136,8 @@ class TewkeNewSceneRepairFlow(RepairsFlow):
 
             added_scenes.append(pending[scene_id])
 
-            new_control_types[scene_id] = config["scene_text"]
-            if not config["enabled_text"]:
+            new_control_types[scene_id] = scene_text
+            if not enabled_text:
                 newly_disabled.append(scene_id)
 
             del pending[scene_id]
