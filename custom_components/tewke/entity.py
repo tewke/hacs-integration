@@ -26,8 +26,9 @@ class TewkeEntity(CoordinatorEntity[TewkeCoordinator]):
         super().__init__(coordinator)
         entry = coordinator.config_entry
         tap = entry.runtime_data.tap
+        device_id = tap.wall_dock_id or entry.unique_id or entry.entry_id
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.unique_id or entry.entry_id)},
+            identifiers={(DOMAIN, device_id)},
             name=entry.data.get(CONF_NAME, "Tewke"),
             manufacturer="Tewke",
             model="Tap",
