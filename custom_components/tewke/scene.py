@@ -210,6 +210,25 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
             return
         await self._async_set_scene(state=True, brightness=percentage)
 
+    @property
+    def is_on(self) -> bool | None:
+        """
+        Return True when the scene is active.
+
+        If the device reports a brightness of 100, substitute the configured
+        default dimming value so the entity never reflects a raw 100% reading.
+        """
+        scene = self._scene
+        if scene is not None:
+            self._is_on = scene.is_active
+            if scene.brightness is not None:
+                self._brightness = (
+                    self._default_dimming
+                    if scene.brightness == 100  # noqa: PLR2004
+                    else scene.brightness
+                )
+        return self._is_on
+
     async def async_set_percentage(self, percentage: int) -> None:
         """Set fan speed. A percentage of 0 turns the fan off."""
         return await self._async_set_percentage(percentage)
@@ -220,10 +239,23 @@ class TewkeSceneFan(TewkeSceneEntity, FanEntity):
         preset_mode: str | None = None,  # noqa: ARG002
         **_kwargs: object,
     ) -> None:
-        """Turn on the fan, using the default scene dimming value if no percentage is given."""
-        await self._async_set_percentage(
-            percentage if percentage is not None else self._default_dimming
-        )
+        """
+        Turn on the fan at the requested speed.
+
+        When no percentage is given, the current device speed is used unless it
+        is at maximum (100), in which case the configured default speed is used.
+        """
+        _MAX_SPEED = 100  # noqa: N806
+        if percentage is not None:
+            target = percentage
+        else:
+            current = self.percentage
+            target = (
+                self._default_dimming
+                if current is None or current == _MAX_SPEED
+                else current
+            )
+        await self._async_set_percentage(target)
 
     async def async_turn_off(self, **_kwargs: object) -> None:
         """Turn off the fan."""
